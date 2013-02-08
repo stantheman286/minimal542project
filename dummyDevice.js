@@ -39,7 +39,7 @@ Device.prototype.manageHTTPRequest = function(request,response) {
   //TODO: figure out how to handle POST data portion of request
   //      for now nothing needs it so it has been left out.
   var req_args = url.parse(request.url,true).query;
-  var eventfn = this.events[req_args.cmd](response);
+  var eventfn = this.events[req_args.cmd];
   var event_data = null; //this is where the post data goes.
   if (typeof(eventfn) === 'function' ) {
     eventfn(event_data, response);
@@ -64,10 +64,8 @@ function getAppEvent(event_data, response) {
   var file =  fs.readFileSync(app_code_path,'utf8');
   //TODO: change content-type to javascript
   response.writeHead(200, {'Content-Type': 'text/plain'});
-  console.log(file);
   response.end(file);
 }
 
 ///////////////////////////////////// MAIN ////////////////////////////////////
 d = new Device(8080);
-d.init();
