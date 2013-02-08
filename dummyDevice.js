@@ -2,58 +2,27 @@
 //  Dummy device.  invoked using nodejs
 //
 
-var http = require('http');
 var fs   = require('fs');
-var url  = require('url');
+var HEL  = require('./httpEventListener.js').httpEventListener;
 
 //some parameters.  they should go in a config file later:
 var app_code_path = 'app.js';
-
 
 /////////////////////////////// A basic device /////////////////////////////////
 function Device(listen_port) {
   //a basic device.  Many functions are stubs and or return dummy values
   //listen_port: listen for http requests on this port
-  var this_device = this;
-  this.events = [];
-  
-  http.createServer(function(req,res) {
-    this_device.manageHTTPRequest(req,res);
-  }).listen(listen_port);
+  HEL.call(this,'cmd',listen_port);
 
+  //add apps events here
   this.addEventHandler('getCode',getAppEvent); 
 }
+Device.prototype = Object.create(HEL.prototype);
+Device.prototype.constructor = Device;
 Device.prototype.advertize = function() {
   //broadcast on a specified multicast address/port that you exist
   //TODO: fill in
   //TODO: add which multicast address/port should be used to the spec
-}
-Device.prototype.manageHTTPRequest = function(request,response) {
-  //called when an http request happens
-  //wrapped up in such a way that 'this' still refers to a device object,
-  //as it should.
-  //request: http request
-  //response: http response
-    
-  //parse request
-  //TODO: figure out how to handle POST data portion of request
-  //      for now nothing needs it so it has been left out.
-  var req_args = url.parse(request.url,true).query;
-  var eventfn = this.events[req_args.cmd];
-  var event_data = null; //this is where the post data goes.
-  if (typeof(eventfn) === 'function' ) {
-    eventfn(event_data, response);
-  } else {
-    //bad request!
-    response.writeHead(400, {'Content-Type': 'text/plain'});
-    response.end();
-  }
-  
-}
-Device.prototype.addEventHandler = function(event_name, handler) {
-  // Adds an event handler.
-  // 
-  this.events[event_name] = handler;
 }
 
 function getAppEvent(event_data, response) {
