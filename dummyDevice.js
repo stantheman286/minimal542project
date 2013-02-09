@@ -13,6 +13,9 @@ function Device(listen_port) {
   //a basic device.  Many functions are stubs and or return dummy values
   //listen_port: listen for http requests on this port
   HEL.call(this,'cmd',listen_port);
+  //TODO: the uuid should be proceedurally and DETERMINISTICALLY generated!
+  //      ie uuid should never changer for a given device
+  this.uuid = '45db4d90-724b-11e2-bcfd-0800200c9a66'
 
   //add apps events here
   this.addEventHandler('getCode',getAppEvent); 
