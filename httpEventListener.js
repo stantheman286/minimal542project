@@ -34,18 +34,30 @@ httpEventListener.prototype.manageHTTPRequest = function(request,response) {
   //response: http response
     
   //parse request
-  //TODO: figure out how to handle POST data portion of request
-  //      for now nothing needs it so it has been left out.
+  var post_data = '';
   var req_args = url.parse(request.url,true).query;
   var eventfn = this.events[req_args[this.event_field_name]];
-  var event_data = null; //this is where the post data goes.
-  if (typeof(eventfn) === 'function' ) {
-    eventfn(event_data, response);
-  } else {
-    //bad request!
-    response.writeHead(400, {'Content-Type': 'text/plain'});
-    response.end();
+  
+  var handle_resp = function(){
+    req_args.post_data = post_data;
+    if (typeof(eventfn) === 'function' ) {
+      eventfn(req_args, response);
+    } else {
+      //bad request!
+      response.writeHead(400, {'Content-Type': 'text/plain'});
+      response.end();
+    }
   }
+  
+  if (request.method == 'POST') {
+    request.on('data',function(d){
+      post_data += d;
+    });
+    request.on('end', handle_resp);
+  } else {
+    handle_resp();
+  }
+  
   
 }
 httpEventListener.prototype.addEventHandler = function(command_name, handler) {
