@@ -35,7 +35,13 @@ Manager.prototype.addDevice = function(uuid, ip4addr, http_port) {
   
 }
 Manager.prototype.storeData = function(fields, response) {
-  console.log(typeof(fields.post_data))
+  //
+  // Event handler for store
+  // fields: the query fields and post data
+  // response: the http.ServerResponse object.
+  //
+  
+  //TODO: replace with actual code.
   console.log(fields.post_data);
   response.end('thanks!');
 }
