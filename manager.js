@@ -1,6 +1,9 @@
 var mysql = require('mysql');
 var HEL  = require('./httpEventListener.js').httpEventListener;
 
+//parameters
+var table_name = 'manager';
+
 ///////////////////////////////// MINIMAL MANAGER //////////////////////////////
 function Manager(listen_port){
   HEL.call(this,'action',listen_port);
@@ -44,6 +47,37 @@ Manager.prototype.storeData = function(fields, response) {
   //TODO: replace with actual code.
   console.log(fields.post_data);
   response.end('thanks!');
+}
+Manager.prototype.checkDBTable = function(tbl_name,callback) {
+  //
+  // Checks to make sure tabe tbl_name exists
+  // if it does not it gets created
+  // tbl_name: the table to check for
+  // callback: function to be called when complete
+  //           callback(error)
+  //           error: the error string retuned by mysql or null if success
+  //
+  
+  this.dbconn.query("SHOW TABLES LIKE '"+tbl_name+"';", function(e,r) {
+    if (!e && r.length < 1){
+      makeTable();
+    } else {
+      //queue up callbackfn
+      setTimeout(callback(e),0);
+    }
+  });
+  
+  function makeTable(){
+    this.dbconn.query('CREATE TABLE '+tbl_name+' (\
+                       id INT NOT NULL AUTO_INCREMENT,\
+                       epoch BIGINT NOT NULL,\
+                       uuid CHAR(36) NOT NULL,\
+                       data VARCHAR(1024),\
+                       PRIMARY KEY (id)\
+                      );',function(e,r){
+      setTimeout(callback(e),0);
+    });
+  };
 }
 
 m=new Manager(9090);
