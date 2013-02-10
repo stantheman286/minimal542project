@@ -3,7 +3,7 @@ var http = require('http');
 var options = {
   hostname: 'localhost',
   port: 9090,
-  path: '/?action=store',
+  path: '/?action=store&uuid=abcd',
   method: 'POST'
 };
 

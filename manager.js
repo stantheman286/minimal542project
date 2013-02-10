@@ -19,7 +19,10 @@ function Manager(listen_port){
   });
   this.dbconn.connect();
   
-  this.addEventHandler('store',this.storeData);
+  var this_manager = this;
+  this.addEventHandler('store',function(f,r){
+    this_manager.storeData(f,r);
+  });
   //add the dummy device for now
   //TODO: delete this and implement the discovery protocol
   this.addDevice('45db4d90-724b-11e2-bcfd-0800200c9a66','127.0.0.1',8080);
@@ -43,10 +46,37 @@ Manager.prototype.storeData = function(fields, response) {
   // fields: the query fields and post data
   // response: the http.ServerResponse object.
   //
+  var dbconnection = this.dbconn;
+  this.checkDBTable(table_name,function(e){
+    if (fields.post_data) {
+      var pd = dbconnection.escape(fields.post_data);
+    }
+    if(e) { //db error
+      response.writeHead(503, {'Content-Type': 'text/plain'});
+      response.end('database error: ' + e);
+    } else if (!fields.uuid) {
+      response.writeHead(400, {'Content-Type': 'text/plain'});
+      response.end('missing device uuid');
+    } else if (fields.post_data.length>1024){
+      response.writeHead(413, {'Content-Type': 'text/plain'});
+      response.end('post data too large try storeBIG action');
+    } else {
+      var uuid = dbconnection.escape(fields.uuid);
+      d = new Date();
+      dbconnection.query("INSERT INTO " + table_name +
+                        "(epoch,uuid,data) VALUES" +
+                        "(" + d.getTime() + ", "+uuid +
+                        ", " + pd + ");",function(e,r){
+        
+      });
+      response.writeHead(200, {'Content-Type': 'text/plain'});
+      response.end('wrote '+fields.post_data.length+' bytes.');
+    }
+  });
   
   //TODO: replace with actual code.
-  console.log(fields.post_data);
-  response.end('thanks!');
+  //console.log(fields.post_data);
+  //response.end('thanks!');
 }
 Manager.prototype.checkDBTable = function(tbl_name,callback) {
   //
