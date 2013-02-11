@@ -145,17 +145,14 @@ Manager.prototype.getCode = function(fields,response){
     response.writeHead(400, {'Content-Type': 'text/plain'});
     response.end('unknown device uuid');
   } else {
-    console.log('firing http req');
     var options = {
       host: this.devices[fields.uuid].addr,
       port: this.devices[fields.uuid].port,
       path: '/?cmd=getCode',
       method: 'GET'
     };
-    console.log(JSON.stringify(options)); 
     var app_code = '';
     http.request(options, function(res) {
-      console.log('client request response');
       if (res.statusCode == 200) {
         res.setEncoding('utf8');
         res.on('data', function(chunk){
