@@ -70,6 +70,10 @@ httpEventListener.prototype.addEventHandler = function(command_name, handler) {
   //                data has a special property 'post_data' which contains
   //                the post data, if any, from the http POST request.  
   //          response: the http response object used to respond to the request
-  // 
-  this.events[command_name] = handler;
+  //
+  var that = this;
+  var fn = function(f,r){
+    handler.call(that,f,r);
+  }
+  this.events[command_name] = fn;
 }

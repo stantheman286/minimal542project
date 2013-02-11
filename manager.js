@@ -19,10 +19,9 @@ function Manager(listen_port){
   });
   this.dbconn.connect();
   
-  var this_manager = this;
-  this.addEventHandler('store',function(f,r){
-    this_manager.storeData(f,r);
-  });
+  this.addEventHandler('store',this.storeData);
+  this.addEventHandler('retrieve',this.getData);
+  
   //add the dummy device for now
   //TODO: delete this and implement the discovery protocol
   this.addDevice('45db4d90-724b-11e2-bcfd-0800200c9a66','127.0.0.1',8080);
@@ -67,16 +66,11 @@ Manager.prototype.storeData = function(fields, response) {
                         "(epoch,uuid,data) VALUES" +
                         "(" + d.getTime() + ", "+uuid +
                         ", " + pd + ");",function(e,r){
-        
+        response.writeHead(200, {'Content-Type': 'text/plain'});
+        response.end('wrote '+fields.post_data.length+' bytes.');
       });
-      response.writeHead(200, {'Content-Type': 'text/plain'});
-      response.end('wrote '+fields.post_data.length+' bytes.');
     }
   });
-  
-  //TODO: replace with actual code.
-  //console.log(fields.post_data);
-  //response.end('thanks!');
 }
 Manager.prototype.checkDBTable = function(tbl_name,callback) {
   //
@@ -109,6 +103,29 @@ Manager.prototype.checkDBTable = function(tbl_name,callback) {
     });
   };
 }
-
+Manager.prototype.getData = function(fields,response){
+  if (!fields.uuid) {
+    response.writeHead(400, {'Content-Type': 'text/plain'});
+    response.end('missing device uuid');
+  } else {
+    this.dbconn.query("SELECT data FROM " + table_name + " Where uuid LIKE " +
+                      this.dbconn.escape(fields.uuid) + " ORDER BY id;",
+                      function(e,r) {
+      if(e) {
+        response.writeHead(503, {'Content-Type': 'text/plain'});
+        response.end('database error: ' + e);
+      } else {
+        response.writeHead(200, {'Content-Type': 'text/plain'});
+        for (var i = 0; i<r.length; i++){
+          response.write(r[i].data + "\n");
+        }
+        response.end();
+      }
+    });
+  }
+}
+Manager.prototype.getCode = function(fields,response){
+  
+}
 m=new Manager(9090);
 
