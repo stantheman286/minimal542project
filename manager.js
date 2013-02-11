@@ -1,5 +1,6 @@
 var mysql = require('mysql');
-var HEL  = require('./httpEventListener.js').httpEventListener;
+var http  = require('http');
+var HEL   = require('./httpEventListener.js').httpEventListener;
 
 //parameters
 var table_name = 'manager';
@@ -21,6 +22,7 @@ function Manager(listen_port){
   
   this.addEventHandler('store',this.storeData);
   this.addEventHandler('retrieve',this.getData);
+  this.addEventHandler('getCode',this.getCode);
   
   //add the dummy device for now
   //TODO: delete this and implement the discovery protocol
@@ -60,6 +62,7 @@ Manager.prototype.storeData = function(fields, response) {
       response.writeHead(413, {'Content-Type': 'text/plain'});
       response.end('post data too large try storeBIG action');
     } else {
+      //TODO: update last seen
       var uuid = dbconnection.escape(fields.uuid);
       d = new Date();
       dbconnection.query("INSERT INTO " + table_name +
@@ -104,6 +107,11 @@ Manager.prototype.checkDBTable = function(tbl_name,callback) {
   };
 }
 Manager.prototype.getData = function(fields,response){
+  //
+  //Event handler for ?action=retrieve.
+  // fields: the query fields
+  // response: the http.ServerResponse object.
+  //
   if (!fields.uuid) {
     response.writeHead(400, {'Content-Type': 'text/plain'});
     response.end('missing device uuid');
@@ -125,7 +133,46 @@ Manager.prototype.getData = function(fields,response){
   }
 }
 Manager.prototype.getCode = function(fields,response){
-  
+  //
+  // Event handler for ?action=getCode
+  // fields: the query fields 
+  // response: the http.ServerResponse object.
+  //  
+  if (!fields.uuid) {  
+    response.writeHead(400, {'Content-Type': 'text/plain'});
+    response.end('missing device uuid');
+  } else if (!this.devices[fields.uuid]) {
+    response.writeHead(400, {'Content-Type': 'text/plain'});
+    response.end('unknown device uuid');
+  } else {
+    console.log('firing http req');
+    var options = {
+      host: this.devices[fields.uuid].addr,
+      port: this.devices[fields.uuid].port,
+      path: '/?cmd=getCode',
+      method: 'GET'
+    };
+    console.log(JSON.stringify(options)); 
+    var app_code = '';
+    http.request(options, function(res) {
+      console.log('client request response');
+      if (res.statusCode == 200) {
+        res.setEncoding('utf8');
+        res.on('data', function(chunk){
+          //console.log('getting chunk');
+          app_code += chunk;
+        });
+        res.on('end',function(){
+          //TODO: change to proper content type
+          response.writeHead(200, {'Content-Type': 'text/plain'});
+          response.end(app_code);
+        });
+      } else {
+        response.writeHead(503, {'Content-Type': 'text/plain'});
+        response.end("device error");
+      }
+    }).end();
+  }
 }
 m=new Manager(9090);
 
