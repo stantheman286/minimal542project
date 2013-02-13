@@ -45,7 +45,8 @@ httpEventListener.prototype.manageHTTPRequest = function(request,response) {
     } else {
       //bad request!
       response.writeHead(400, {'Content-Type': 'text/plain'});
-      response.end();
+      response.end('bad request');
+      console.log('bad req');
     }
   }
   

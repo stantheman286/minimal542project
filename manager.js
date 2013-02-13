@@ -1,6 +1,8 @@
 var mysql = require('mysql');
 var http  = require('http');
 var HEL   = require('./httpEventListener.js').httpEventListener;
+var js2xml = require('./js2xml').js2xml;  //TODO: replace with npm version
+var parsexml = require('xml2js').parseString;
 
 //parameters
 var table_name = 'manager';
@@ -23,23 +25,24 @@ function Manager(listen_port){
   this.addEventHandler('store',this.storeData);
   this.addEventHandler('retrieve',this.getData);
   this.addEventHandler('getCode',this.getCode);
+  this.addEventHandler('list',this.getDevList);
   
   //add the dummy device for now
   //TODO: delete this and implement the discovery protocol
-  this.addDevice('45db4d90-724b-11e2-bcfd-0800200c9a66','127.0.0.1',8080);
+  //this.addDevice('45db4d90-724b-11e2-bcfd-0800200c9a66','127.0.0.1',8080);
+//  this.addDevice('45db4d90-724b-11e2-bcfd-0800200c9a63','127.0.0.1',8089);
+  this.queryDeviceInfo('127.0.0.1',8080);
 }
 Manager.prototype = Object.create(HEL.prototype);
 Manager.prototype.constructor = Manager;
-Manager.prototype.addDevice = function(uuid, ip4addr, http_port) {
+Manager.prototype.addDevice = function(device) {
   //
   //Add a device to the known devices list.
   //
   var d = new Date();
-  this.devices[uuid.toLowerCase()] = { addr      : ip4addr,
-                                       port      : http_port,
-                                       last_seen : d.getTime()/1000.0,
-  };
+  device.last_seen = d.getTime()/1000.0;
   
+  this.devices[device.uuid.toLowerCase()] = device;
 }
 Manager.prototype.storeData = function(fields, response) {
   //
@@ -171,5 +174,59 @@ Manager.prototype.getCode = function(fields,response){
     }).end();
   }
 }
+Manager.prototype.queryDeviceInfo = function(ip,port){
+  //
+  //querys a device for more information
+  // ip: the devices ip or host name
+  // port: the tcp port to send http requests too.
+  //
+  var this_manager = this;
+  var options = {
+    host   : ip,
+    port   : port,
+    path   : '/?cmd=info',
+    method : 'GET',
+  };
+  http.request(options, function(res){
+    var resp = '';
+    var dev_info = null;
+    if (res.statusCode == 200) {
+      res.setEncoding('utf8');
+      res.on('data', function(chunk){
+        //console.log('getting chunk');
+        resp += chunk;
+      });
+      res.on('end',function(){
+        //TODO: represent as xml
+        dev_info = JSON.parse(resp);
+        dev_info.ip = ip;
+        dev_info.port = port;
+        this_manager.addDevice(dev_info );
+      });
+    }
+  }).end();
+  
+}
+Manager.prototype.getDevList = function(fields,response) {
+  //
+  // Event handler for ?action=getCode
+  // fields: the query fields 
+  // response: the http.ServerResponse object.
+  //
+  var d = {};
+  d.dev = [];
+  var uuid;
+  var device;
+  //listify device table
+  for (uuid in this.devices) {
+    device = this.devices[uuid];
+    device.uuid = uuid;
+    d.dev.push(device);
+  }
+  response.writeHead(200, {'Content-Type': 'text/plain'});
+  response.end(js2xml(d));
+}
+
+
 m=new Manager(9090);
 
