@@ -7,10 +7,30 @@
 
 <style>
 
-div.app_container { height:400px; width:300px; float: left }
-div.app { background-color: #CCCCCC; width: 100%; height:100%}
-div.dbg {height:104px; width:100%; background-color: #DDD; overflow: scroll}
-#dev_list {background-color:#090; color: #fff}
+html,body {
+  margin:0;
+  height:100%;
+}
+
+div.app_container { height:400px; width:300px; float: left; position: relative}
+div.app_listitem {  }
+#bottom {
+  height:208px;
+  bottom:0px;
+  width:100%;
+  position: absolute;
+  background-color: #DDD;
+  overflow:hidden;}
+#dev_list {
+  background-color:#090;
+  color: #fff;
+  height:50%;
+  overflow-y:scroll}
+#debug {
+  background-color:#ccc;
+  height:50%;
+  overflow-y:scroll}
+  
 #apps {height:500px; width:100%; bottom:30%; }
 
 </style>
@@ -18,9 +38,9 @@ div.dbg {height:104px; width:100%; background-color: #DDD; overflow: scroll}
 <body>
 
 <div id="apps" > x </div>
-<div id="dev_list" class="applauncher"> devices go here </div>
-<div id="debug" class="dbg">
-  debug 
+<div id="bottom" >
+  <div id="dev_list" > devices go here </div>
+  <div id="debug" > debug </div>
 </div>
 <!--<div class="app_container"><div id="app1" class="app" > inactive... </div></div>
 <div class="app_container"><div id="app2" class="app" > inactive... </div></div> -->

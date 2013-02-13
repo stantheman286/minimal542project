@@ -7,17 +7,22 @@ function GenericApp(divobject){
 }
 
 GenericApp.prototype.init = function(){
+  //
+  //builds gui proceedurally
+  //
   var field1 = document.createElement("div");
   var field2 = document.createElement("div");
   var type_input = document.createElement("input");
   var data_input = document.createElement("input");
   var abutton = document.createElement("button");
+  var result_div = document.createElement("div");
   this.div.style.cssText = "background-color:#BFB";
   this.div.innerHTML = "";
   field1.innerHTML = "Event type: ";
   field1.appendChild(type_input);
   field2.innerHTML = "Data:";
   field2.appendChild(data_input);
+
   abutton.innerHTML = "Send";
  
   var that=this;
@@ -28,6 +33,7 @@ GenericApp.prototype.init = function(){
   this.div.appendChild(field1);
   this.div.appendChild(field2);
   this.div.appendChild(abutton);
+  this.div.appendChild(result_div);
 }
 GenericApp.prototype.sendEvent = function(type,data){
   //replace with actual request code
@@ -55,7 +61,7 @@ ColorChangeApp.prototype.init = function() {
   this.div.appendChild(changeColorButton);
 }
 
-var App = ColorChangeApp;
+var App = GenericApp;
 
 /*
 function loadevent(){

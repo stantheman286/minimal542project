@@ -38,6 +38,7 @@ function updateDevices() {
         dev_button.innerHTML = 'launch';
         dev_button.onclick = function(){ addapp(devuuid);};
         var dev_div = document.createElement("div");
+        dev_div.setAttribute('class','app_listitem');
         var dev_descr = devices[devuuid].name + ": " + devices[devuuid].status;
         
         dev_div.appendChild(dev_button);
