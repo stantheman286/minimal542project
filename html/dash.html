@@ -2,56 +2,23 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<script>
+<script src="dash.js"></script>
 
-window.onload = function(){
-  var main_elem = document.getElementById('apps');
-  var devlist_elem = document.getElementById('dev_list');
-  var dbg_elem = document.getElementById('debug');
-  function dbg(msg) {
-    dbg_elem.innerHTML += msg + '<br>';
-  }
-  
-  dbg('running...')
-  
-  //get list of devices
-  function updateDevices() {
-    var devices;
-    var http = new XMLHttpRequest();
-    http.open("GET","/?action=list" ,false);
-    http.onreadystatechange=function() {
-      dbg('rsc');
-      if (http.readyState==4 && http.status == 200) {
-        devices = JSON.parse(http.responseText);
-        devlist.innerHTML = '';
-        for (devuuid in devices) {
-          
-          
-        }
-        
-      }
-    };
-    http.send();
-  }
-  
-  updateDevices();
-}
-</script>
 
 <style>
-body,html{
-  height:100%;
-}
+
 div.app_container { height:400px; width:300px; float: left }
 div.app { background-color: #CCCCCC; width: 100%; height:100%}
-div.dbg {height:30%; width:100%; background-color: #DDD}
+div.dbg {height:104px; width:100%; background-color: #DDD; overflow: scroll}
+#dev_list {background-color:#090; color: #fff}
+#apps {height:500px; width:100%; bottom:30%; }
 
 </style>
 </head>
 <body>
 
-<div id="apps" > xxx </div>
-<div id="dev_list"> devices go here </div>
+<div id="apps" > x </div>
+<div id="dev_list" class="applauncher"> devices go here </div>
 <div id="debug" class="dbg">
   debug 
 </div>

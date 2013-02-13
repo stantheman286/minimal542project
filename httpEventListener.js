@@ -42,6 +42,7 @@ httpEventListener.prototype.manageHTTPRequest = function(request,response) {
   var parsedURL = url.parse(request.url,true);
   var req_args = parsedURL.query;
   var eventfn = this.events[req_args[this.event_field_name]];
+  var html_base = this.html_base;
   
   var handle_resp = function(){
     req_args.post_data = post_data;
@@ -57,13 +58,14 @@ httpEventListener.prototype.manageHTTPRequest = function(request,response) {
     //if its none of the above its probably a file
     } else {
       //replace .. with . in pathname to prevent exploit)
-      var path = this.html_base + parsedURL.pathname.replace(/\.+/g,'.');
+      var path = html_base + parsedURL.pathname.replace(/\.+/g,'.');
+      console.log('getting file: ' + path )
       fs.readFile(path,'utf8', function(err,data) {
         if (err) {
           response.writeHead(404, {'Content-Type': 'text/plain'});
-          response.end();
+          response.end(String(err));
         } else {
-          response.writeHead(200, {'Content-Type': 'text/plain'});
+          response.writeHead(200, {'Content-Type': getMIMEType(path)});
           response.end(data);
         }
       });
@@ -100,4 +102,25 @@ httpEventListener.prototype.addEventHandler = function(command_name, handler) {
     handler.call(that,f,r);
   }
   this.events[command_name] = fn;
+}
+
+
+function getMIMEType(path) {
+  //
+  // gets the MIME type of a file based on its extension
+  // path: the file's path
+  //
+  var pattern = /\.([a-z]+)$/i
+  var extension = pattern.exec(path)[1];
+  var extensionLUT = {html : 'text/html',
+                      js   : 'text/javascript',
+                      ico  : 'image/x-icon',
+                     };
+  
+  if (extensionLUT[extension]) {
+    return extensionLUT[extension];
+  } else {
+    return 'text/plain';
+  }
+  
 }

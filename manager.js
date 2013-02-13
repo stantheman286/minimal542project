@@ -1,9 +1,11 @@
 var mysql = require('mysql');
 var http  = require('http');
 var HEL   = require('./httpEventListener.js').httpEventListener;
+var fs    = require('fs');
 
 //parameters
 var table_name = 'manager';
+var dash_HTML  = './dash.html';
 
 ///////////////////////////////// MINIMAL MANAGER //////////////////////////////
 function Manager(listen_port){
@@ -185,6 +187,9 @@ Manager.prototype.queryDeviceInfo = function(ip,port){
     path   : '/?cmd=info',
     method : 'GET',
   };
+  
+  //TODO: this can trigger an exception if the device is gone
+  //TODO: hande the exception
   http.request(options, function(res){
     var resp = '';
     var dev_info = null;
@@ -211,20 +216,12 @@ Manager.prototype.getDevList = function(fields,response) {
   // fields: the query fields 
   // response: the http.ServerResponse object.
   //
-  var d = {};
-  d.dev = [];
-  var uuid;
-  var device;
-  //listify device table
-  for (uuid in this.devices) {
-    device = this.devices[uuid];
-    device.uuid = uuid;
-    d.dev.push(device);
-  }
+  
   response.writeHead(200, {'Content-Type': 'text/plain'});
-  response.end(js2xml(d));
+  response.end(JSON.stringify(this.devices));
 }
 
+//////////////////////////////STARTUP CODE/////////////////////////////////////
 
 m=new Manager(9090);
 

@@ -9,6 +9,7 @@ var crypto = require('crypto');
 
 //some parameters.  they should go in a config file later:
 var app_code_path = 'app.js';
+var name          = 'Dummy Device';
 
 /////////////////////////////// A basic device /////////////////////////////////
 function Device(listen_port) {
@@ -65,6 +66,7 @@ Device.prototype.info = function(fields,response) {
     uuid   : this.uuid,
     status : this.status,
     state  : this.state,
+    name   : name,
     }));
   console.log('info req');
   

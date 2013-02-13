@@ -3,6 +3,7 @@ function GenericApp(divobject){
         throw "First argument Must be a valid html object";
     }
     this.div = divobject;
+    this.init();
 }
 
 GenericApp.prototype.init = function(){
@@ -54,7 +55,9 @@ ColorChangeApp.prototype.init = function() {
     this.div.appendChild(changeColorButton);
 }
 
+var App = ColorChangeApp;
 
+/*
 function loadevent(){
     //app1, app2 etc should be generated here not in the html
     //but this is just an app example not a control panel example
@@ -65,3 +68,4 @@ function loadevent(){
 }
 
 window.onload=loadevent;
+*/
