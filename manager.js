@@ -1,8 +1,6 @@
 var mysql = require('mysql');
 var http  = require('http');
 var HEL   = require('./httpEventListener.js').httpEventListener;
-var js2xml = require('./js2xml').js2xml;  //TODO: replace with npm version
-var parsexml = require('xml2js').parseString;
 
 //parameters
 var table_name = 'manager';
