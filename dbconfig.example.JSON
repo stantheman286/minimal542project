@@ -1,0 +1,7 @@
+{
+  "host"        : "vergil.u.washington.edu",
+  "port"        : 12345,
+  "user"        : "myDBuser",
+  "database"    : "ee542",
+  "password"    : "myDBpassword"
+}

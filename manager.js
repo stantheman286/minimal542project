@@ -14,13 +14,10 @@ function Manager(listen_port){
   this.port = listen_port;
   this.devices = {};  //a hash table of known devices keyed by uuid
    
-  this.dbconn = mysql.createConnection({
-    host        : 'vergil.u.washington.edu',
-    port        : 3141,
-    user        : 'chris',
-    database    : 'ee542',
-    password    : 'raspberry',
-  });
+  //read dbconfig from an external file that is not part of the code repository
+  var dbconfigTEXT = fs.readFileSync('./dbconfig.JSON','utf8');
+  var dbconfig = JSON.parse(dbconfigTEXT);
+  this.dbconn = mysql.createConnection(dbconfig);
   this.dbconn.connect();
   
   this.addEventHandler('store',this.storeData);

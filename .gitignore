@@ -2,3 +2,4 @@
 *.komodoproject
 node_modules
 test_files
+dbconfig.JSON
