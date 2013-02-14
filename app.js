@@ -6,7 +6,7 @@ function GenericApp(divobject,uuid,parrent){
   // parent: the dashboard that launched it
   this.myuuid = uuid;
   if (divobject===undefined) {
-    throw "First argument Must be a valid html object";
+    throw "First argument must be a valid html object";
   }
   this.div = divobject;
 }
@@ -86,7 +86,6 @@ GenericApp.prototype.getUIhtml = function() {
   //
   //Ask manager for html and make tag names unique.
   //return the uniqueified HTML
-  // SPEC TODO: how do i know which device i belong to?
   
   return html;
 }

@@ -19,13 +19,11 @@ function Device(listen_port) {
   HEL.call(this,'cmd',listen_port);
   
   //Compute uuid
-  ////this.uuid = '45db4d90-724b-11e2-bcfd-0800200c9a66'  
-  var unique_str = '';
+  var unique_str = OS.hostname()+listen_port;
   if (OS.type() == 'Linux'){
-    //TODO: fill in for linux hashing the MAC addr + listen_port
-  } else {
-    unique_str = OS.hostname()+listen_port;
-  }
+    //TODO: fill in for linux the MAC addr + listen_port
+    //unique_str = mac addr + listen_port;
+  } 
   //make uuid from unique string, roughly following uuid v5 spec 
   var hash = crypto.createHash('sha1').update(unique_str).digest('hex');
   this.uuid = hash.substr(0,8)+"-"+hash.substr(8,4)+"-5"+hash.substr(12,3)
