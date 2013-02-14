@@ -68,11 +68,15 @@ function getAppEvent(event_data, response) {
   //gets the app code and sends it in the response body
   //response: the HTTP response
   
-  //TODO: (vlp) make this an async call so we don't have to wait on IO
-  var file =  fs.readFileSync(app_code_path,'utf8');
-  //TODO: change content-type to javascript
-  response.writeHead(200, {'Content-Type': 'text/plain'});
-  response.end(file);
+  fs.readFile(app_code_path,'utf8',function(err,file) {
+    if (!err) {
+      response.writeHead(200, {'Content-Type': 'text/javascript'});
+      response.end(file);
+    } else {
+      response.writeHead(404, {'Content-Type': 'text/plain'});
+      response.end('cannot read file \n' + err);
+    }
+  });
 }
 
 ///////////////////////////////////// MAIN ////////////////////////////////////

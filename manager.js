@@ -2,6 +2,7 @@ var mysql = require('mysql');
 var http  = require('http');
 var HEL   = require('./httpEventListener.js').httpEventListener;
 var fs    = require('fs');
+var url   = require('url');
 
 //parameters
 var table_name = 'manager';
@@ -26,6 +27,7 @@ function Manager(listen_port){
   this.addEventHandler('retrieve',this.getData);
   this.addEventHandler('getCode',this.getCode);
   this.addEventHandler('list',this.getDevList);
+  this.addEventHandler('forward',this.forward);
   
   //add the dummy device for now
   //TODO: delete this and implement the discovery protocol
@@ -96,13 +98,13 @@ Manager.prototype.checkDBTable = function(tbl_name,callback) {
   });
   
   function makeTable(){
-    this.dbconn.query('CREATE TABLE '+tbl_name+' (\
-                       id INT NOT NULL AUTO_INCREMENT,\
-                       epoch BIGINT NOT NULL,\
-                       uuid CHAR(36) NOT NULL,\
-                       data VARCHAR(1024),\
-                       PRIMARY KEY (id)\
-                      );',function(e,r){
+    this.dbconn.query('CREATE TABLE '+tbl_name+' (' +
+                       'id INT NOT NULL AUTO_INCREMENT, ' +
+                       'epoch BIGINT NOT NULL, ' + 
+                       'uuid CHAR(36) NOT NULL, ' +
+                       'data VARCHAR(1024), ' +
+                       'PRIMARY KEY (id) ' +
+                      ');',function(e,r){
       setTimeout(callback(e),0);
     });
   };
@@ -135,6 +137,7 @@ Manager.prototype.getData = function(fields,response){
 }
 Manager.prototype.getCode = function(fields,response){
   //
+  // Deprecated!  use forward
   // Event handler for ?action=getCode
   // fields: the query fields 
   // response: the http.ServerResponse object.
@@ -218,7 +221,41 @@ Manager.prototype.getDevList = function(fields,response) {
   response.writeHead(200, {'Content-Type': 'text/plain'});
   response.end(JSON.stringify(this.devices));
 }
-
+Manager.prototype.forward = function(fields,response) {
+  if (!fields.uuid) {  
+    response.writeHead(400, {'Content-Type': 'text/plain'});
+    response.end('missing device uuid');
+  } else if (!this.devices[fields.uuid]) {
+    response.writeHead(400, {'Content-Type': 'text/plain'});
+    response.end('unknown device uuid');
+  } else {
+    
+    var options = {
+      host: this.devices[fields.uuid].addr,
+      port: this.devices[fields.uuid].port,
+      path: url.format({query: fields,pathname: '/'}),
+      method: 'GET',
+    };
+    var app_code = '';
+    http.request(options, function(res) {
+      if (res.statusCode == 200) {
+        console.dir(res);
+        res.setEncoding('utf8');
+        res.on('data', function(chunk){
+          //console.log('getting chunk');
+          app_code += chunk;
+        });
+        res.on('end',function(){
+          response.writeHead(200, {'Content-Type': res.headers['content-type']});
+          response.end(app_code);
+        });
+      } else {
+        response.writeHead(503, {'Content-Type': 'text/plain'});
+        response.end("device error");
+      }
+    }).end();
+  }
+}
 //////////////////////////////STARTUP CODE/////////////////////////////////////
 
 m=new Manager(9090);
