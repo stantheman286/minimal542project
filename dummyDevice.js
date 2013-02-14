@@ -55,12 +55,6 @@ Device.prototype.info = function(fields,response) {
   //
   
   response.writeHead(200, {'Content-Type': 'text/plain'});
-  //TODO: make use of XML
-  /*
-  response.write('<uuid>'+this.uuid+'</uuid>\n');
-  response.write('<status>'+this.status+'</status>\n');
-  response.write('<state>'+this.state+'</state>\n');
-  */
   
   response.end(JSON.stringify( {
     uuid   : this.uuid,

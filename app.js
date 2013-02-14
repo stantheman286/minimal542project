@@ -1,12 +1,17 @@
-function GenericApp(divobject){
+function GenericApp(divobject,uuid,parrent){
+  // A generic app.  does very little.  start should probably be
+  // completely overwritten if inheriting from this.
+  // divobject: the div tag into which the App can put UI elements.
+  // uuid: The UUID of the device associated with this app
+  // parent: the dashboard that launched it
+  this.myuuid = uuid;
   if (divobject===undefined) {
     throw "First argument Must be a valid html object";
   }
   this.div = divobject;
-  this.init();
 }
 
-GenericApp.prototype.init = function(){
+GenericApp.prototype.start = function(){
   //
   //builds gui proceedurally
   //
@@ -35,43 +40,80 @@ GenericApp.prototype.init = function(){
   this.div.appendChild(abutton);
   this.div.appendChild(result_div);
 }
-GenericApp.prototype.sendEvent = function(type,data){
-  //replace with actual request code
-  alert("Event type: " + type + "\nData: " + data)
+GenericApp.prototype.sendEvent = function(type,args){
+  // NOTE: THIS IS NOT PART OF THE FORMAL SPEC BECAUSE DASH DOES NOT NEED TO  
+  //       KNOW ABOUT IT.  HOWEVER IT IS STRONGLY RECOMENDED THAT THIS BE 
+  //       IMPLEMENTED TO KEEP YOUR CODE CLEAN.  THINK OF THIS AS A PRIVATE 
+  //       METHOD.
+  // Send an event to the manager, which then sends it to the device.
+  // type: string that the device understands.
+  // args: arguements to be added to url query string formatted as 
+  //      {f1: val1, f2: val2 ...}
+  
+  //TODO: fill in
+  console.log("Event type: " + type + "\nData: " + args);
+}
+GenericApp.prototype.update = function() {
+  //
+  //update whatever needs to be updated in this app
+  //
+  
+  //nothing to do for generic app.
+}
+GenericApp.prototype.stop = function() {
+  //
+  //Stops all timers, close connections etc 
+  //
+  
+  //nothing to be done for generic app.
+  clearInterval(this.update_interval_id);
+}
+GenericApp.prototype.setInterval = function(interval){
+  //
+  // Sets the update intervnal in ms for the app.
+  // interval: the interval in ms.  if interval = 0, never autoupdates.
+  // 
+  var that = this;
+  if (interval>0) {
+    this.update_interval_id = setInterval(function(){
+      that.update();
+    },interval);
+  }
+  
 }
 
-function ColorChangeApp(divobj) {
-  GenericApp.call(this,divobj);
+GenericApp.prototype.getUIhtml = function() {
+  //
+  //Ask manager for html and make tag names unique.
+  //return the uniqueified HTML
+  // SPEC TODO: how do i know which device i belong to?
+  
+  return html;
 }
-ColorChangeApp.prototype = Object.create(GenericApp.prototype);
-ColorChangeApp.prototype.constructor = ColorChangeApp;
-ColorChangeApp.prototype.init = function() {
-  var changeColorButton = document.createElement("button");
+GenericApp.prototype.getElement = function() {
+  //
+  //similar to getElementById but fixes the ids to comply with whatever
+  //
+}
+////////////////////////////////////SUB CLASS///////////////////////////////////
+
+function DummyApp(divobj,parrent) {
+  GenericApp.call(this,divobj,parrent);
+}
+DummyApp.prototype = Object.create(GenericApp.prototype);
+DummyApp.prototype.constructor = DummyApp;
+DummyApp.prototype.start = function() {
+  var getDataButton = document.createElement("button");
     
-  GenericApp.prototype.init.call(this);
+  GenericApp.prototype.start.call(this);
   this.colors = ['#FBB','#BFB','#BBF'];
   this.colorIndex = 1;
-  changeColorButton.innerHTML = "Change Color";
+  getDataButton.innerHTML = "getData";
   var that = this;
-  changeColorButton.addEventListener('click', function(){
-    that.colorIndex = (that.colorIndex+1)%(that.colors.length);
-    that.div.style.cssText = "background-color: "
-        + that.colors[that.colorIndex];
+  getDataButton.addEventListener('click', function(){
+    
   });
-  this.div.appendChild(changeColorButton);
+  this.div.appendChild(getDataButton);
 }
 
 var App = GenericApp;
-
-/*
-function loadevent(){
-  //app1, app2 etc should be generated here not in the html
-  //but this is just an app example not a control panel example
-  var app1 = new GenericApp(document.getElementById('app1'));
-  app1.init();
-  var app2 = new ColorChangeApp(document.getElementById('app2'));
-  app2.init();
-}
-
-window.onload=loadevent;
-*/

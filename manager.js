@@ -29,8 +29,6 @@ function Manager(listen_port){
   
   //add the dummy device for now
   //TODO: delete this and implement the discovery protocol
-  //this.addDevice('45db4d90-724b-11e2-bcfd-0800200c9a66','127.0.0.1',8080);
-//  this.addDevice('45db4d90-724b-11e2-bcfd-0800200c9a63','127.0.0.1',8089);
   this.queryDeviceInfo('127.0.0.1',8080);
 }
 Manager.prototype = Object.create(HEL.prototype);
