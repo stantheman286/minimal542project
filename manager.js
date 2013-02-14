@@ -25,7 +25,6 @@ function Manager(listen_port){
   
   this.addEventHandler('store',this.storeData);
   this.addEventHandler('retrieve',this.getData);
-  this.addEventHandler('getCode',this.getCode);
   this.addEventHandler('list',this.getDevList);
   this.addEventHandler('forward',this.forward);
   
@@ -133,46 +132,6 @@ Manager.prototype.getData = function(fields,response){
         response.end();
       }
     });
-  }
-}
-Manager.prototype.getCode = function(fields,response){
-  //
-  // Deprecated!  use forward
-  // Event handler for ?action=getCode
-  // fields: the query fields 
-  // response: the http.ServerResponse object.
-  //  
-  if (!fields.uuid) {  
-    response.writeHead(400, {'Content-Type': 'text/plain'});
-    response.end('missing device uuid');
-  } else if (!this.devices[fields.uuid]) {
-    response.writeHead(400, {'Content-Type': 'text/plain'});
-    response.end('unknown device uuid');
-  } else {
-    var options = {
-      host: this.devices[fields.uuid].addr,
-      port: this.devices[fields.uuid].port,
-      path: '/?cmd=getCode',
-      method: 'GET'
-    };
-    var app_code = '';
-    http.request(options, function(res) {
-      if (res.statusCode == 200) {
-        res.setEncoding('utf8');
-        res.on('data', function(chunk){
-          //console.log('getting chunk');
-          app_code += chunk;
-        });
-        res.on('end',function(){
-          //TODO: change to proper content type
-          response.writeHead(200, {'Content-Type': 'text/plain'});
-          response.end(app_code);
-        });
-      } else {
-        response.writeHead(503, {'Content-Type': 'text/plain'});
-        response.end("device error");
-      }
-    }).end();
   }
 }
 Manager.prototype.queryDeviceInfo = function(ip,port){
