@@ -5,12 +5,16 @@ window.onload = function(){
 
 function Dashboard(){
   this.devices = null;
+  this.manager_hostname = location.hostname;
+  this.manager_port = location.port;
   
   this.main_elem = document.getElementById('apps');
   this.devlist_elem = document.getElementById('dev_list');
   this.dbg_elem = document.getElementById('debug');
   
-  this.dbg('DB created');
+  this.dbg(this.manager_hostname);
+  this.dbg(this.manager_port);
+  this.dbg('Dash created');
   this.update();
 }
 

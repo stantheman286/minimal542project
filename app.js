@@ -40,7 +40,7 @@ GenericApp.prototype.start = function(){
   this.div.appendChild(abutton);
   this.div.appendChild(result_div);
 }
-GenericApp.prototype.sendEvent = function(type,args){
+GenericApp.prototype.sendEvent = function(type,args,cb){
   // NOTE: THIS IS NOT PART OF THE FORMAL SPEC BECAUSE DASH DOES NOT NEED TO  
   //       KNOW ABOUT IT.  HOWEVER IT IS STRONGLY RECOMENDED THAT THIS BE 
   //       IMPLEMENTED TO KEEP YOUR CODE CLEAN.  THINK OF THIS AS A PRIVATE 
@@ -49,6 +49,11 @@ GenericApp.prototype.sendEvent = function(type,args){
   // type: string that the device understands.
   // args: arguements to be added to url query string formatted as 
   //      {f1: val1, f2: val2 ...}
+  //      that get parsed into ?f1=val1&f2=val2 ...
+  //
+  // cb: callback function
+  //     function(resp_str)
+  //     resp_str: the manager's response as a string.
   
   //TODO: fill in
   console.log("Event type: " + type + "\nData: " + args);
