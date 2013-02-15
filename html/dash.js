@@ -105,6 +105,21 @@ Dashboard.prototype.logout = function() {
   //todo implement
   this.dbg('logout unimplemented');
 }
+Dashboard.prototype.loadScript = function(scriptSrc,callback) {
+  //
+  // Loads a script dynamically.
+  // scriptSrc: a string containing the source of the script
+  // callback: a callback function called when the script has loaded
+  //
+  var oHead = document.getElementsByTagName('head');
+  var oScript = document.createElement('script');
+  oScript.type = 'text/javascript';
+  oScript.src = sScriptSrc;
+  if (callback) {
+    oScript.onload = callback;
+  }
+  oHead.appendChild(oScript);
+}
 
 function getApp(appCodeText){
   //
@@ -114,3 +129,7 @@ function getApp(appCodeText){
   eval(appCodeText);
   return App;
 }
+
+
+
+
