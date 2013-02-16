@@ -1,21 +1,19 @@
 Instructions
 ============
 
-Install mysql
--------------
+Install mysql library
+---------------------
 
 The code in this repository depends on the mysql node package. to install
 locally type
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-npm install mysql
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    npm install mysql
+
 
 or to install globally
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-npm -g install mysql
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    npm -g install mysql
 
 Configure database
 ------------------
@@ -28,15 +26,11 @@ run
 
 to run a dummyDevice
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-node dummyDevice.js
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    node dummyDevice.js
 
 to run the manager
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-node manager.js
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    node manager.js
 
 note: as its written now you must start dummyDevice first.
 
@@ -52,18 +46,7 @@ requests.  ie the bar minimum to load an app.
 
 ### App
 
--   sendEvent - helper function.  sends event to manager.  Not mandated by spec
-    but important.
-
--   getUIhtml - helper function.  sends request to device (through manager) to
-    get innerHTML for app ui.  This is optional since innerHTML may be
-    procedurally generated.  if implemented this function must uniqueify the tag
-    id's and the device must support a getHTML command.
-
--   getElement - helper function.
-
--   note: when subclassing App most methods will have to be rewritten.  The
-    above three only need be written once so someone should implement them.
+-   note: when subclassing App most methods will have to be overridden.  Only helper methods such as getUIhtml and sendEvent will probably be unchanged.
 
 ### Manager
 
@@ -75,8 +58,6 @@ that need to be implemented are
 
 -   Currently getData only returns ALL data and does not process the 'since'
     field
-
--   
 
 ### Dash
 
