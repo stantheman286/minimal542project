@@ -55,7 +55,7 @@ GenericApp.prototype.sendEvent = function(type,args,cb){
   //     function(resp_str)
   //     resp_str: the manager's response as a string.
   
-  //TODO: fill in
+  //TODO: fill in 
   console.log("Event type: " + type + "\nData: " + args);
 }
 GenericApp.prototype.update = function() {

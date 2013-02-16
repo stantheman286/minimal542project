@@ -115,6 +115,7 @@ Manager.prototype.getData = function(fields,response){
     response.writeHead(400, {'Content-Type': 'text/plain'});
     response.end('missing device uuid');
   } else {
+    //TODO: handle the since argument
     this.dbconn.query("SELECT data FROM " + table_name + " Where uuid LIKE " +
                       this.dbconn.escape(fields.uuid) + " ORDER BY id;",
                       function(e,r) {
