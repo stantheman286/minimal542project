@@ -214,6 +214,8 @@ Manager.prototype.forward = function(fields,response) {
   }
 }
 //////////////////////////////STARTUP CODE/////////////////////////////////////
-
-m=new Manager(9090);
+//if i'm being called from command line
+if(require.main === module) {
+  m=new Manager(9090);
+}
 

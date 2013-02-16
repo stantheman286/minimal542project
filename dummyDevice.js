@@ -80,4 +80,8 @@ function getAppEvent(event_data, response) {
 }
 
 ///////////////////////////////////// MAIN ////////////////////////////////////
-d = new Device(8080);
+//if i'm being called from command line
+if(require.main === module) {
+  d = new Device(8080);
+}
+
