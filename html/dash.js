@@ -32,7 +32,7 @@ Dashboard.prototype.update = function() {
   //
   var http = new XMLHttpRequest();
   var this_dash = this;
-  http.open("GET","/?action=list" ,true);
+  http.open("GET","/?action=list" ,false);
   http.onreadystatechange=function() {
     if (http.readyState==4 && http.status == 200) {
       this_dash.devices = JSON.parse(http.responseText);
@@ -133,7 +133,3 @@ function getApp(appCodeText){
   eval(appCodeText);
   return App;
 }
-
-
-
-

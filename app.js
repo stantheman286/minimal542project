@@ -59,39 +59,31 @@ GenericApp.prototype.sendEvent = function(type,args,cb){
   //
   // cb: callback function
   //     function(err,resp_str)
-  //     err: '' if no error otherwise a maybe helful string about the error
+  //     err: an error message and status code as string
   //     resp_str: the manager's response as a string.
   
   //TODO: fill in 
-  console.log("Event type: " + type + "\nData: " + args);
   
-  //add action to args list
   args.action = type;
   //build up url
-  /*
-  var options = {
-    hostname: parent.manager_hostname,
-    port: parent.manager_port,
-    path: url.format({query: args,pathname: '/'}),
-    method: 'GET',
-  };
-  var res_body = '';
-  http.request(options, function(res) {
-    if (res.statusCode == 200) {
-      console.dir(res);
-      res.setEncoding('utf8');
-      res.on('data', function(chunk){
-        //console.log('getting chunk');
-        res_body += chunk;
-      });
-      res.on('end',function(){
-        cb('',res_body);
-      });
-    } else {
-      cb('error' + res.statusCode,'');
+  var path = '/?';
+  var once = true;
+  for (f in args) {
+    path += f + "=" + args[f] +"&";
+  }
+  path = path.substring(0,path.length-1); //remove last &
+  var http = new XMLHttpRequest();
+  http.open("GET",path,false);
+  http.onreadystatechange=function(){
+    if (http.readyState==4 ) {
+      if (http.status == 200) {
+        cb('', http.responseText);
+      } else{
+        cb('Error: '+http.status,http.responseText);
+      }
     }
-  }).end();  */
-  //TODO: replace the above with AJAX http.open call
+  }
+  http.send();
   
 }
 GenericApp.prototype.update = function() {
