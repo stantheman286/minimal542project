@@ -39,6 +39,12 @@ GenericApp.prototype.start = function(){
   this.div.appendChild(field2);
   this.div.appendChild(abutton);
   this.div.appendChild(result_div);
+  //debug code
+  this.sendEvent('list',{foo:'bar'},function(e,r){
+    console.log("e" +e);
+    console.log("r" +r);
+  })
+  
 }
 GenericApp.prototype.sendEvent = function(type,args,cb){
   // NOTE: THIS IS NOT PART OF THE FORMAL SPEC BECAUSE DASH DOES NOT NEED TO  
@@ -52,11 +58,41 @@ GenericApp.prototype.sendEvent = function(type,args,cb){
   //      that get parsed into ?f1=val1&f2=val2 ...
   //
   // cb: callback function
-  //     function(resp_str)
+  //     function(err,resp_str)
+  //     err: '' if no error otherwise a maybe helful string about the error
   //     resp_str: the manager's response as a string.
   
   //TODO: fill in 
   console.log("Event type: " + type + "\nData: " + args);
+  
+  //add action to args list
+  args.action = type;
+  //build up url
+  /*
+  var options = {
+    hostname: parent.manager_hostname,
+    port: parent.manager_port,
+    path: url.format({query: args,pathname: '/'}),
+    method: 'GET',
+  };
+  var res_body = '';
+  http.request(options, function(res) {
+    if (res.statusCode == 200) {
+      console.dir(res);
+      res.setEncoding('utf8');
+      res.on('data', function(chunk){
+        //console.log('getting chunk');
+        res_body += chunk;
+      });
+      res.on('end',function(){
+        cb('',res_body);
+      });
+    } else {
+      cb('error' + res.statusCode,'');
+    }
+  }).end();  */
+  //TODO: replace the above with AJAX http.open call
+  
 }
 GenericApp.prototype.update = function() {
   //
