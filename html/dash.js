@@ -68,7 +68,7 @@ Dashboard.prototype.addapp = function(uuid) {
   
   this.dbg ('adding app...');
   
-  http.open("GET","/?action=getCode&uuid="+uuid);
+  http.open("GET","/?action=forward&cmd=getCode&uuid="+uuid);
   http.onreadystatechange=function(){
     if (http.readyState==4 && http.status == 200) {
       App = getApp(http.responseText);

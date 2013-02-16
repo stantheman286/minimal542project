@@ -196,10 +196,8 @@ Manager.prototype.forward = function(fields,response) {
     var app_code = '';
     http.request(options, function(res) {
       if (res.statusCode == 200) {
-        console.dir(res);
         res.setEncoding('utf8');
         res.on('data', function(chunk){
-          //console.log('getting chunk');
           app_code += chunk;
         });
         res.on('end',function(){
