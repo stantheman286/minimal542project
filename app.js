@@ -1,45 +1,40 @@
-function GenericApp(divobject,uuid,parrent){
+function GenericApp(divobject,uuid,parent){
   // A generic app.  does very little.  start should probably be
   // completely overwritten if inheriting from this.
   // divobject: the div tag into which the App can put UI elements.
   // uuid: The UUID of the device associated with this app
   // parent: the dashboard that launched it
   this.myuuid = uuid;
-  if (divobject===undefined) {
+  if (!divobject) {
     throw "First argument must be a valid html object";
   }
   this.div = divobject;
+  this.dash = parent;
 }
 
 GenericApp.prototype.start = function(){
   //
+  //Starts app and loads gui.
   //builds gui proceedurally
   //
-  var field1 = document.createElement("div");
-  var field2 = document.createElement("div");
-  var type_input = document.createElement("input");
-  var data_input = document.createElement("input");
-  var abutton = document.createElement("button");
-  var result_div = document.createElement("div");
-  this.div.style.cssText = "background-color:#BFB";
-  this.div.innerHTML = "";
-  field1.innerHTML = "Event type: ";
-  field1.appendChild(type_input);
-  field2.innerHTML = "Data:";
-  field2.appendChild(data_input);
 
-  abutton.innerHTML = "Send";
- 
-  var that=this;
-  abutton.addEventListener('click',function() {
-    that.sendEvent(type_input.value,data_input.value);
+  //set some attributes for the app div
+  this.div.style.cssText = "background-color:#BFB";
+  
+  var this_app = this;
+  this.getUIhtml(function(e,h){
+    this_app.div.innerHTML = h;
+    this_app.getAllElements();
+    this_app.send_button.addEventListener('click',function(){
+      var q = {};
+      q.xxxxxxx = "y&"+this_app.query_field.value; //lazy
+      this_app.sendEvent(this_app.event_field.value,
+                         q,function(err,resp){
+        //TODO: handle event response
+        this_app.dash.dbg(resp);
+      });
+    });
   });
-  
-  this.div.appendChild(field1);
-  this.div.appendChild(field2);
-  this.div.appendChild(abutton);
-  this.div.appendChild(result_div);
-  
 }
 GenericApp.prototype.sendEvent = function(type,args,cb){
   // NOTE: THIS IS NOT PART OF THE FORMAL SPEC BECAUSE DASH DOES NOT NEED TO  
@@ -48,9 +43,11 @@ GenericApp.prototype.sendEvent = function(type,args,cb){
   //       METHOD.
   // Send an event to the manager, which then sends it to the device.
   // type: string that the device understands.
-  // args: arguements to be added to url query string formatted as 
+  // args: arguements to be added to url query string
+  //      may either be an object formatted as 
   //      {f1: val1, f2: val2 ...}
-  //      that get parsed into ?f1=val1&f2=val2 ...
+  //      that will get parsed into ?f1=val1&f2=val2 ...
+  //      or a string formatted as a query eg "?f1=val1&f2=val2" 
   //
   // cb: callback function
   //     function(err,resp_str)
@@ -109,6 +106,11 @@ GenericApp.prototype.setInterval = function(interval){
   }
   
 }
+GenericApp.prototype.getAllElements = function(){
+  this.event_field = this.getElement("event_field");
+  this.query_field = this.getElement("query_field");
+  this.send_button = this.getElement("send_button");
+}
 
 GenericApp.prototype.getUIhtml = function(cb) {
   //
@@ -133,6 +135,8 @@ GenericApp.prototype.getElement = function(originalID) {
   //
   return document.getElementById("id" + this.myuuid + originalID);
 }
+
+
 ////////////////////////////////////SUB CLASS///////////////////////////////////
 
 function DummyApp(divobj,parrent) {
