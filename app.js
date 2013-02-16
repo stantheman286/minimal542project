@@ -9,8 +9,6 @@ function GenericApp(divobject,uuid,parrent){
     throw "First argument must be a valid html object";
   }
   this.div = divobject;
-  //debug code
-  this.getUIhtml();
 }
 
 GenericApp.prototype.start = function(){
