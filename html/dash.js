@@ -42,7 +42,12 @@ Dashboard.prototype.update = function() {
         var dev_button = document.createElement("button");
         dev_button.type = 'button';
         dev_button.innerHTML = 'launch';
-        dev_button.onclick = function(){ this_dash.addapp(devuuid);};
+        // "evaluate" uuid right now
+        dev_button.onclick = (function(u){
+          return function(){
+            this_dash.addapp(u);
+          }
+        })(devuuid);
         var dev_div = document.createElement("div");
         dev_div.setAttribute('class','app_listitem');
         var dev_descr = this_dash.devices[devuuid].name + ": " +

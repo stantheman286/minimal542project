@@ -9,6 +9,8 @@ function GenericApp(divobject,uuid,parrent){
     throw "First argument must be a valid html object";
   }
   this.div = divobject;
+  //debug code
+  this.getUIhtml();
 }
 
 GenericApp.prototype.start = function(){
@@ -39,11 +41,6 @@ GenericApp.prototype.start = function(){
   this.div.appendChild(field2);
   this.div.appendChild(abutton);
   this.div.appendChild(result_div);
-  //debug code
-  this.sendEvent('list',{foo:'bar'},function(e,r){
-    console.log("e" +e);
-    console.log("r" +r);
-  })
   
 }
 GenericApp.prototype.sendEvent = function(type,args,cb){
@@ -115,17 +112,28 @@ GenericApp.prototype.setInterval = function(interval){
   
 }
 
-GenericApp.prototype.getUIhtml = function() {
+GenericApp.prototype.getUIhtml = function(cb) {
   //
   //Ask manager for html and make tag names unique.
-  //return the uniqueified HTML
+  //  cb: call back function function (error,uniquifiedHTML){...}
+  //      uniquifiedHTML: the uniquified html fro app's ui.
+  //      e: error.  '' for no error.  see sendEvent.
+  //
+  var this_uuid = this.myuuid;
   
-  return html;
+  this.sendEvent('forward',{cmd:'getHTML',uuid:this.myuuid},function(e,r){
+    var uhtml = r.replace(/(<[^>]+id\=\")/ig,"$1"+"id"+this_uuid);
+    cb(e,uhtml);
+  })
+  
+  //return html;
 }
-GenericApp.prototype.getElement = function() {
+GenericApp.prototype.getElement = function(originalID) {
   //
   //similar to getElementById but fixes the ids to comply with whatever
+  //  originalID: the tag ID as written in the original html code.
   //
+  return document.getElementById("id" + this.myuuid + originalID);
 }
 ////////////////////////////////////SUB CLASS///////////////////////////////////
 

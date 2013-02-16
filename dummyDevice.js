@@ -8,8 +8,9 @@ var OS   = require('os');
 var crypto = require('crypto');
 
 //some parameters.  they should go in a config file later:
-var app_code_path = 'app.js';
-var name          = 'Dummy Device';
+var app_code_path  = 'app.js';
+var html_code_path = 'app.html';
+var name           = 'Dummy Device';
 
 /////////////////////////////// A basic device /////////////////////////////////
 function Device(listen_port) {
@@ -35,7 +36,8 @@ function Device(listen_port) {
   this.state  = "none"; //no other state for such a simple device
 
   //add apps events here
-  this.addEventHandler('getCode',getAppEvent); 
+  this.addEventHandler('getCode',getCodeEvent); 
+  this.addEventHandler('getHTML',getHTMLEvent); 
   this.addEventHandler('info',this.info); 
 }
 Device.prototype = Object.create(HEL.prototype);
@@ -64,13 +66,28 @@ Device.prototype.info = function(fields,response) {
   
 }
 
-function getAppEvent(event_data, response) {
+function getCodeEvent(event_data, response) {
   //gets the app code and sends it in the response body
   //response: the HTTP response
   
   fs.readFile(app_code_path,'utf8',function(err,file) {
     if (!err) {
       response.writeHead(200, {'Content-Type': 'text/javascript'});
+      response.end(file);
+    } else {
+      response.writeHead(404, {'Content-Type': 'text/plain'});
+      response.end('cannot read file \n' + err);
+    }
+  });
+}
+
+function getHTMLEvent(event_data, response) {
+  //gets the app code and sends it in the response body
+  //response: the HTTP response
+  
+  fs.readFile(html_code_path,'utf8',function(err,file) {
+    if (!err) {
+      response.writeHead(200, {'Content-Type': 'text/html'});
       response.end(file);
     } else {
       response.writeHead(404, {'Content-Type': 'text/plain'});
