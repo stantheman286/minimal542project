@@ -34,6 +34,10 @@ to run the manager
 
 note: as its written now you must start dummyDevice first.
 
+Now that manager is running dash may be launched at
+
+    http://localhost:9090/dash.html
+
 Notable unimplemented components
 --------------------------------
 
@@ -42,7 +46,11 @@ The following is a, most likely, incomplete list of unimplemented components
 ### Device
 
 This is just a sample device. Right now it only responds to getCode and info
-requests.  ie the bar minimum to load an app.
+requests.  ie the bare minimum to load an app.
+HTTP queries to be implemented:
+-   ping 
+-   acquire - called by manager to associate the device with the manager
+-   implementation specific stuff like handling messages from app and storing data
 
 ### App
 

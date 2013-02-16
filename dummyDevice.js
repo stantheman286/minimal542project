@@ -80,7 +80,6 @@ function getCodeEvent(event_data, response) {
     }
   });
 }
-
 function getHTMLEvent(event_data, response) {
   //gets the app code and sends it in the response body
   //response: the HTTP response
