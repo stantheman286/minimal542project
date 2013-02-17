@@ -66,6 +66,10 @@ that need to be implemented are
 
 -   Currently getData only returns ALL data and does not process the 'since'
     field
+    
+-   storeBig action is unimplemented.
+
+-   forward of post data is unimplemented.
 
 ### Dash
 
