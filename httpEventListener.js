@@ -45,7 +45,8 @@ httpEventListener.prototype.manageHTTPRequest = function(request,response) {
   var html_base = this.html_base;
   
   var handle_resp = function(){
-    req_args.post_data = post_data;
+    req_args['@post_data'] = post_data;
+    req_args['@ip'] = request.connection.remoteAddress;
     //if its an event
     if (typeof(eventfn) === 'function' ) {
       eventfn(req_args, response);

@@ -3,10 +3,12 @@ var http  = require('http');
 var HEL   = require('./httpEventListener.js').httpEventListener;
 var fs    = require('fs');
 var url   = require('url');
+var dgram = require('dgram');
 
 //parameters
 var table_name = 'manager';
 var dash_HTML  = './dash.html';
+var keystr = "obqQm3gtDFZdaYlENpIYiKzl+/qARDQRmiWbYhDW9wreM/APut73nnxCBJ8a7PwW";
 
 ///////////////////////////////// MINIMAL MANAGER //////////////////////////////
 function Manager(listen_port){
@@ -25,9 +27,11 @@ function Manager(listen_port){
   this.addEventHandler('list',this.getDevList);
   this.addEventHandler('forward',this.forward);
   
+  this.setupMulticastListener('239.255.67.238',17768);
+  
   //add the dummy device for now
   //TODO: delete this and implement the discovery protocol
-  this.queryDeviceInfo('127.0.0.1',8080);
+  //this.queryDeviceInfo('127.0.0.1',8080);
 }
 Manager.prototype = Object.create(HEL.prototype);
 Manager.prototype.constructor = Manager;
@@ -48,8 +52,8 @@ Manager.prototype.storeData = function(fields, response) {
   //
   var dbconnection = this.dbconn;
   this.checkDBTable(table_name,function(e){
-    if (fields.post_data) {
-      var pd = dbconnection.escape(fields.post_data);
+    if (fields['@post_data']) {
+      var pd = dbconnection.escape(fields['@post_data']);
     }
     if(e) { //db error
       response.writeHead(503, {'Content-Type': 'text/plain'});
@@ -57,7 +61,7 @@ Manager.prototype.storeData = function(fields, response) {
     } else if (!fields.uuid) {
       response.writeHead(400, {'Content-Type': 'text/plain'});
       response.end('missing device uuid');
-    } else if (fields.post_data.length>1024){
+    } else if (fields['@post_data'].length>1024){
       response.writeHead(413, {'Content-Type': 'text/plain'});
       response.end('post data too large try storeBIG action');
     } else {
@@ -69,7 +73,7 @@ Manager.prototype.storeData = function(fields, response) {
                         "(" + d.getTime() + ", "+uuid +
                         ", " + pd + ");",function(e,r){
         response.writeHead(200, {'Content-Type': 'text/plain'});
-        response.end('wrote '+fields.post_data.length+' bytes.');
+        response.end('wrote '+fields['@post_data'].length+' bytes.');
       });
     }
   });
@@ -145,7 +149,6 @@ Manager.prototype.queryDeviceInfo = function(ip,port){
     path   : '/?cmd=info',
     method : 'GET',
   };
-  
   //TODO: this can trigger an exception if the device is gone
   //TODO: hande the exception
   http.request(options, function(res){
@@ -167,6 +170,19 @@ Manager.prototype.queryDeviceInfo = function(ip,port){
     }
   }).end();
   
+  options = {
+    host   : ip,
+    port   : port,
+    path   : '/?cmd=acquire&port=' + this.port,
+    method : 'GET',
+  };
+  http.request(options,function(res){
+    if(res.statusCode==200) {
+      //good do nothing.
+    } else {
+      //TODO: decide what to do with the error.
+    }
+  }).end();
 }
 Manager.prototype.getDevList = function(fields,response) {
   //
@@ -210,6 +226,27 @@ Manager.prototype.forward = function(fields,response) {
       }
     }).end();
   }
+}
+Manager.prototype.setupMulticastListener = function(mcastAddr,port){
+  //
+  // Sets up a UDP multicast listener to listen for new devices
+  // mcastAddr: the multicast address
+  // port: the port to listen on.
+  //
+  this_manager = this;
+  var udpsock = dgram.createSocket('udp4', function (message, remote){
+    var m = message.toString();
+    var port = NaN;
+    var remoteIP = remote.address;
+    if (m.substr(0,64) === keystr) {
+      port = parseInt(m.substr(64,5),10);
+      console.log("KEY found");
+      console.log("remote: " + remoteIP + ":" + port);
+      this_manager.queryDeviceInfo(remoteIP,port);
+    }
+  });
+  udpsock.bind(port);
+  udpsock.addMembership(mcastAddr);
 }
 //////////////////////////////STARTUP CODE/////////////////////////////////////
 //if i'm being called from command line
