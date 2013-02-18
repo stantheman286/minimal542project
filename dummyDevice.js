@@ -6,11 +6,13 @@ var fs   = require('fs');
 var HEL  = require('./httpEventListener.js').httpEventListener;
 var OS   = require('os');
 var crypto = require('crypto');
+var dgram = require('dgram');
 
 //some parameters.  they should go in a config file later:
 var app_code_path  = 'app.js';
 var html_code_path = 'app.html';
 var name           = 'Dummy Device';
+var keystr = "obqQm3gtDFZdaYlENpIYiKzl+/qARDQRmiWbYhDW9wreM/APut73nnxCBJ8a7PwW";
 
 /////////////////////////////// A basic device /////////////////////////////////
 function Device(listen_port) {
@@ -38,14 +40,33 @@ function Device(listen_port) {
   //add apps events here
   this.addEventHandler('getCode',getCodeEvent); 
   this.addEventHandler('getHTML',getHTMLEvent); 
-  this.addEventHandler('info',this.info); 
+  this.addEventHandler('info',this.info);
+  this.addEventHandler('acquire',this.acquire);
+  
+  //advertize that i'm here every 10 seconds until i'm aquired
+  var this_device = this;
+  this.advert_timer = setInterval(function(){
+    this_device.advertize('239.255.67.238',17768);
+  },10000) ;
 }
 Device.prototype = Object.create(HEL.prototype);
 Device.prototype.constructor = Device;
-Device.prototype.advertize = function() {
+Device.prototype.advertize = function(mcastAddr,mport) {
   //broadcast on a specified multicast address/port that you exist
-  //TODO: fill in
-  //TODO: add which multicast address/port should be used to the spec
+  // mcastAddr: the multicast address
+  // mport: the port to listen on.
+  var p = "00000" + this.port;
+  p = p.substr(p.length-5); //zero pad up to 5 chars
+  
+  var udpsock = dgram.createSocket('udp4');
+  udpsock.bind();
+  udpsock.setMulticastTTL(10);
+  
+  var message = new Buffer(keystr+p);
+  udpsock.send(message,0,message.length,mport,mcastAddr,
+               function(err,bytes){
+    udpsock.close();
+  });
 }
 Device.prototype.info = function(fields,response) {
   //
@@ -65,7 +86,19 @@ Device.prototype.info = function(fields,response) {
   console.log('info req');
   
 }
-
+Device.prototype.acquire = function(fields,response) {
+  //
+  // set this as acquired
+  // fields: the html query fields
+  // response: an http.ServerResponse object used to respond to the server
+  //
+  response.writeHead(200, {'Content-Type': 'text/plain'});
+  response.end();
+  this.manager_port = parseInt(fields.port,10);
+  this.manager_IP  = fields['@ip'] ;
+  clearInterval(this.advert_timer);
+  
+}
 function getCodeEvent(event_data, response) {
   //gets the app code and sends it in the response body
   //response: the HTTP response
@@ -98,6 +131,9 @@ function getHTMLEvent(event_data, response) {
 ///////////////////////////////////// MAIN ////////////////////////////////////
 //if i'm being called from command line
 if(require.main === module) {
-  d = new Device(8080);
+  var d1 = new Device(8080);
+  setTimeout(function(){
+    var d2 = new Device(8081);
+  },1000);
 }
 
