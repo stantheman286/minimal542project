@@ -44,11 +44,7 @@ function Device(listen_port) {
   this.addEventHandler('acquire',this.acquire);
   
   //advertize that i'm here every 10 seconds until i'm aquired
-<<<<<<< HEAD
   var this_device = this;
-=======
-  this_device = this;
->>>>>>> f113bac1aeb39fc1f68acc0ffc957a2dd146964e
   this.advert_timer = setInterval(function(){
     this_device.advertize('239.255.67.238',17768);
   },10000) ;
@@ -70,11 +66,7 @@ Device.prototype.advertize = function(mcastAddr,mport) {
   udpsock.send(message,0,message.length,mport,mcastAddr,
                function(err,bytes){
     udpsock.close();
-<<<<<<< HEAD
   });
-=======
-  });  
->>>>>>> f113bac1aeb39fc1f68acc0ffc957a2dd146964e
 }
 Device.prototype.info = function(fields,response) {
   //
@@ -104,12 +96,7 @@ Device.prototype.acquire = function(fields,response) {
   response.end();
   this.manager_port = parseInt(fields.port,10);
   this.manager_IP  = fields['@ip'] ;
-<<<<<<< HEAD
   clearInterval(this.advert_timer);
-=======
-  clearTimeout(this.advert_timer);
->>>>>>> f113bac1aeb39fc1f68acc0ffc957a2dd146964e
-  
 }
 function getCodeEvent(event_data, response) {
   //gets the app code and sends it in the response body

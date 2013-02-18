@@ -241,11 +241,6 @@ Manager.prototype.setupMulticastListener = function(mcastAddr,port){
     var remoteIP = remote.address;
     if (m.substr(0,64) === keystr) {
       port = parseInt(m.substr(64,5),10);
-<<<<<<< HEAD
-=======
-      console.log("KEY found");
-      console.log("remote: " + remoteIP + ":" + port);
->>>>>>> f113bac1aeb39fc1f68acc0ffc957a2dd146964e
       this_manager.queryDeviceInfo(remoteIP,port);
     }
   });
