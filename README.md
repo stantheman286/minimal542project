@@ -62,8 +62,6 @@ Right now Manager assumes there is a single device at 127.0.0.1 on port 8080
 (see line "//TODO: delete this and implement the discovery protocol").  Things
 that need to be implemented are
 
--   Discovery protocol (should be simple)
-
 -   Currently getData only returns ALL data and does not process the 'since'
     field
     
