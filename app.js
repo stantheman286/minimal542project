@@ -25,33 +25,16 @@ function AbstractApp(divobject,uuid,parent){
 AbstractApp.prototype.start = function(){
   //
   //Starts app and loads gui.
-  //builds gui proceedurally
   //
 
-  //set some attributes for the app div
-  this.div.style.cssText = "background-color:#BFB";
-  
-  var this_app = this;
-  this.getUIhtml(function(e,h){
-    this_app.div.innerHTML = h;
-    this_app.getAllElements();
-    this_app.send_button.addEventListener('click',function(){
-      var q = {};
-      q.xxxxxxx = "y&"+this_app.query_field.value; //lazy
-      this_app.sendEvent(this_app.event_field.value,
-                         q,function(err,resp){
-        //TODO: handle event response
-        this_app.dash.dbg(resp);
-      });
-    });
-  });
+  console.log("App.start() is unimplemented!");
 }
 AbstractApp.prototype.update = function() {
   //
   //update whatever needs to be updated in this app
   //
   
-  //nothing to do for abstract app.
+  console.log("App.update() is unimplemented!"); 
 }
 AbstractApp.prototype.stop = function() {
   //
@@ -76,7 +59,7 @@ AbstractApp.prototype.setInterval = function(interval){
   
 }
 
-////////////////////////////////// "Protected" Methods ///////////////////////////
+//////////////////////////////// "Protected" Methods ///////////////////////////
 //Nothing below here is in the specification
 AbstractApp.prototype.sendEvent = function(type,args,cb){
   // NOTE: THIS IS NOT PART OF THE FORMAL SPEC BECAUSE DASH DOES NOT NEED TO  
@@ -142,14 +125,52 @@ AbstractApp.prototype.getElement = function(originalID) {
   return document.getElementById("id" + this.myuuid + originalID);
 }
 
+////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////// Sub Class /////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
+function MyApp(divobj,uuid,parent){
+  this.myuuid = uuid;
+  if (!divobj) {
+    throw "First argument must be a valid html object";
+  }
+  this.div = divobj;
+  this.dash = parent;
+}
+MyApp.prototype = Object.create(AbstractApp.prototype);
 
+//overwrite start and update
+MyApp.prototype.start = function() {
+  //
+  //Starts app and loads gui.
+  //
 
-AbstractApp.prototype.getAllElements = function(){
+  //set some attributes for the app div
+  this.div.style.cssText = "background-color:#BFB";
+  
+  var this_app = this;
+  this.getUIhtml(function(e,h){
+    this_app.div.innerHTML = h;
+    this_app.getAllElements();
+    this_app.send_button.addEventListener('click',function(){
+      var q = {};
+      q.xxxxxxx = "y&"+this_app.query_field.value; //lazy
+      this_app.sendEvent(this_app.event_field.value,
+                         q,function(err,resp){
+        this_app.dash.dbg(resp);
+      });
+    });   
+  });
+};
+// This app has nothing to do on update
+MyApp.prototype.update = function(){};
+
+////////////////////////////////// Some "Private" Methods //////////////////////
+MyApp.prototype.getAllElements = function(){
   this.event_field = this.getElement("event_field");
   this.query_field = this.getElement("query_field");
   this.send_button = this.getElement("send_button");
 }
 
 //spec says app needs to be named App
-var App = AbstractApp;
+var App = MyApp;
