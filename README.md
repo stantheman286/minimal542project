@@ -32,8 +32,6 @@ to run the manager
 
     node manager.js
 
-note: as its written now you must start dummyDevice first.
-
 Now that manager is running dash may be launched at
 
     http://localhost:9090/dash.html
@@ -58,9 +56,7 @@ HTTP queries to be implemented:
 
 ### Manager
 
-Right now Manager assumes there is a single device at 127.0.0.1 on port 8080
-(see line "//TODO: delete this and implement the discovery protocol").  Things
-that need to be implemented are
+To be implemented:
 
 -   Currently getData only returns ALL data and does not process the 'since'
     field
