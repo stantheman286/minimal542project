@@ -1,6 +1,16 @@
-function GenericApp(divobject,uuid,parent){
-  // A generic app.  does very little.  start should probably be
-  // completely overwritten if inheriting from this.
+function AbstractApp(divobject,uuid,parent){
+  //
+  // An abstract app.  While not technically an abstract class it does very
+  // little.  At least the following should be overridden:
+  //    start()
+  //    update()
+  // The following methods may be left alone if only basic functionality
+  // is needed
+  //    setInterval()
+  //    stop()
+  //    
+  //
+  //
   // divobject: the div tag into which the App can put UI elements.
   // uuid: The UUID of the device associated with this app
   // parent: the dashboard that launched it
@@ -12,7 +22,7 @@ function GenericApp(divobject,uuid,parent){
   this.dash = parent;
 }
 
-GenericApp.prototype.start = function(){
+AbstractApp.prototype.start = function(){
   //
   //Starts app and loads gui.
   //builds gui proceedurally
@@ -36,7 +46,39 @@ GenericApp.prototype.start = function(){
     });
   });
 }
-GenericApp.prototype.sendEvent = function(type,args,cb){
+AbstractApp.prototype.update = function() {
+  //
+  //update whatever needs to be updated in this app
+  //
+  
+  //nothing to do for abstract app.
+}
+AbstractApp.prototype.stop = function() {
+  //
+  //Stops all timers, close connections etc 
+  //
+  
+  //nothing to be done for Abstract app.
+  clearInterval(this.update_interval_id);
+}
+AbstractApp.prototype.setInterval = function(interval){
+  //
+  // Sets the update intervnal in ms for the app.
+  // interval: the interval in ms.  if interval = 0, never autoupdates.
+  //
+  
+  var that = this;
+  if (interval>0) {
+    this.update_interval_id = setInterval(function(){
+      that.update();
+    },interval);
+  }
+  
+}
+
+////////////////////////////////// "Protected" Methods ///////////////////////////
+//Nothing below here is in the specification
+AbstractApp.prototype.sendEvent = function(type,args,cb){
   // NOTE: THIS IS NOT PART OF THE FORMAL SPEC BECAUSE DASH DOES NOT NEED TO  
   //       KNOW ABOUT IT.  HOWEVER IT IS STRONGLY RECOMENDED THAT THIS BE 
   //       IMPLEMENTED TO KEEP YOUR CODE CLEAN.  THINK OF THIS AS A PRIVATE 
@@ -78,41 +120,7 @@ GenericApp.prototype.sendEvent = function(type,args,cb){
   http.send();
   
 }
-GenericApp.prototype.update = function() {
-  //
-  //update whatever needs to be updated in this app
-  //
-  
-  //nothing to do for generic app.
-}
-GenericApp.prototype.stop = function() {
-  //
-  //Stops all timers, close connections etc 
-  //
-  
-  //nothing to be done for generic app.
-  clearInterval(this.update_interval_id);
-}
-GenericApp.prototype.setInterval = function(interval){
-  //
-  // Sets the update intervnal in ms for the app.
-  // interval: the interval in ms.  if interval = 0, never autoupdates.
-  // 
-  var that = this;
-  if (interval>0) {
-    this.update_interval_id = setInterval(function(){
-      that.update();
-    },interval);
-  }
-  
-}
-GenericApp.prototype.getAllElements = function(){
-  this.event_field = this.getElement("event_field");
-  this.query_field = this.getElement("query_field");
-  this.send_button = this.getElement("send_button");
-}
-
-GenericApp.prototype.getUIhtml = function(cb) {
+AbstractApp.prototype.getUIhtml = function(cb) {
   //
   //Ask manager for html and make tag names unique.
   //  cb: call back function function (error,uniquifiedHTML){...}
@@ -125,10 +133,8 @@ GenericApp.prototype.getUIhtml = function(cb) {
     var uhtml = r.replace(/(<[^>]+id\=\")/ig,"$1"+"id"+this_uuid);
     cb(e,uhtml);
   })
-  
-  //return html;
 }
-GenericApp.prototype.getElement = function(originalID) {
+AbstractApp.prototype.getElement = function(originalID) {
   //
   //similar to getElementById but fixes the ids to comply with whatever
   //  originalID: the tag ID as written in the original html code.
@@ -137,25 +143,13 @@ GenericApp.prototype.getElement = function(originalID) {
 }
 
 
-////////////////////////////////////SUB CLASS///////////////////////////////////
 
-function DummyApp(divobj,parrent) {
-  GenericApp.call(this,divobj,parrent);
-}
-DummyApp.prototype = Object.create(GenericApp.prototype);
-DummyApp.prototype.constructor = DummyApp;
-DummyApp.prototype.start = function() {
-  var getDataButton = document.createElement("button");
-    
-  GenericApp.prototype.start.call(this);
-  this.colors = ['#FBB','#BFB','#BBF'];
-  this.colorIndex = 1;
-  getDataButton.innerHTML = "getData";
-  var that = this;
-  getDataButton.addEventListener('click', function(){
-    
-  });
-  this.div.appendChild(getDataButton);
+
+AbstractApp.prototype.getAllElements = function(){
+  this.event_field = this.getElement("event_field");
+  this.query_field = this.getElement("query_field");
+  this.send_button = this.getElement("send_button");
 }
 
-var App = GenericApp;
+//spec says app needs to be named App
+var App = AbstractApp;

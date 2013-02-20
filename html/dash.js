@@ -4,10 +4,17 @@ window.onload = function(){
 }
 
 function Dashboard(){
+  //
+  // The dashboard constructor
+  //
+  
+  // These fields must be named exactly as they are (by spec)
   this.devices = null;
   this.manager_hostname = location.hostname;
   this.manager_port = location.port;
+  this.user_name = "";
   
+  //get all elements
   this.main_elem = document.getElementById('apps');
   this.devlist_elem = document.getElementById('dev_list');
   this.dbg_elem = document.getElementById('debug');
