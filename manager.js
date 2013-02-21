@@ -27,7 +27,7 @@ function Manager(listen_port){
   this.addEventHandler('list',this.getDevList);
   this.addEventHandler('forward',this.forward);
   
-  this.setupMulticastListener('239.255.67.238',17768);
+  this.setupMulticastListener('224.250.67.238',17768);
   
   //add the dummy device for now
   //TODO: delete this and implement the discovery protocol

@@ -46,7 +46,7 @@ function Device(listen_port) {
   //advertize that i'm here every 10 seconds until i'm aquired
   var this_device = this;
   this.advert_timer = setInterval(function(){
-    this_device.advertize('239.255.67.238',17768);
+    this_device.advertize('224.250.67.238',17768);
   },10000) ;
 }
 Device.prototype = Object.create(HEL.prototype);
