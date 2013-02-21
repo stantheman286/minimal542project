@@ -3,7 +3,7 @@
 //
 
 var fs   = require('fs');
-var HEL  = require('./httpEventListener.js').httpEventListener;
+var HEL  = require('./httpEventListener.js').HttpEventListener;
 var OS   = require('os');
 var crypto = require('crypto');
 var dgram = require('dgram');
@@ -67,7 +67,7 @@ Device.prototype.advertise = function(mcastAddr,mport) {
                function(err,bytes){
     udpsock.close();
   });
-}
+};
 Device.prototype.info = function(fields,response) {
   //
   // parses info request
@@ -85,7 +85,7 @@ Device.prototype.info = function(fields,response) {
     }));
   console.log('info req');
   
-}
+};
 Device.prototype.acquire = function(fields,response) {
   //
   // set this as acquired
@@ -97,7 +97,7 @@ Device.prototype.acquire = function(fields,response) {
   this.manager_port = parseInt(fields.port,10);
   this.manager_IP  = fields['@ip'] ;
   clearInterval(this.advert_timer);
-}
+};
 function getCodeEvent(event_data, response) {
   //gets the app code and sends it in the response body
   //response: the HTTP response

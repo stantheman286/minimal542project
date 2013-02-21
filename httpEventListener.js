@@ -1,12 +1,14 @@
+/*jshint node:true*/
 var http = require('http');
 var url  = require('url');
 var fs   = require('fs');
 
-exports.httpEventListener = httpEventListener;
+exports.HttpEventListener = HttpEventListener;
 //html base directory for all html files
-var default_html_base = './html'
+var default_html_base = './html';
 
-function httpEventListener(event_field_name, listen_port) {
+function HttpEventListener(event_field_name, listen_port) {
+  "use strict";
   //
   // A basic http event listener class.
   // Makes an http server that listens for commands of the form
@@ -30,7 +32,8 @@ function httpEventListener(event_field_name, listen_port) {
   }).listen(listen_port);
   
 }
-httpEventListener.prototype.manageHTTPRequest = function(request,response) {
+HttpEventListener.prototype.manageHTTPRequest = function(request,response) {
+  "use strict";
   //called when an http request happens
   //wrapped up in such a way that 'this' still refers to a device object,
   //as it should.
@@ -44,6 +47,7 @@ httpEventListener.prototype.manageHTTPRequest = function(request,response) {
   var eventfn = this.events[req_args[this.event_field_name]];
   var html_base = this.html_base;
   
+  var that = this;
   var handle_resp = function(){
     req_args['@post_data'] = post_data;
     req_args['@ip'] = request.connection.remoteAddress;
@@ -51,7 +55,7 @@ httpEventListener.prototype.manageHTTPRequest = function(request,response) {
     if (typeof(eventfn) === 'function' ) {
       eventfn(req_args, response);
     //if its a bad request
-    } else if (req_args[this.event_field_name])   {
+    } else if (req_args[that.event_field_name])   {
       //bad request!
       response.writeHead(400, {'Content-Type': 'text/plain'});
       response.end('bad request');
@@ -60,7 +64,7 @@ httpEventListener.prototype.manageHTTPRequest = function(request,response) {
     } else {
       //replace .. with . in pathname to prevent exploit)
       var path = html_base + parsedURL.pathname.replace(/\.+/g,'.');
-      console.log('getting file: ' + path )
+      console.log('getting file: ' + path );
       fs.readFile(path,'utf8', function(err,data) {
         if (err) {
           response.writeHead(404, {'Content-Type': 'text/plain'});
@@ -74,7 +78,7 @@ httpEventListener.prototype.manageHTTPRequest = function(request,response) {
       
     }
     
-  }
+  };
   
   if (request.method == 'POST') {
     request.on('data',function(d){
@@ -86,8 +90,9 @@ httpEventListener.prototype.manageHTTPRequest = function(request,response) {
   }
   
   
-}
-httpEventListener.prototype.addEventHandler = function(command_name, handler) {
+};
+HttpEventListener.prototype.addEventHandler = function(command_name, handler) {
+  "use strict";
   // Adds an event handler.
   //
   // command_name: a string for the given event name
@@ -101,17 +106,18 @@ httpEventListener.prototype.addEventHandler = function(command_name, handler) {
   var that = this;
   var fn = function(f,r){
     handler.call(that,f,r);
-  }
+  };
   this.events[command_name] = fn;
-}
+};
 
 
 function getMIMEType(path) {
+  "use strict";
   //
   // gets the MIME type of a file based on its extension
   // path: the file's path
   //
-  var pattern = /\.([a-z]+)$/i
+  var pattern = /\.([a-z]+)$/i;
   var extension = pattern.exec(path)[1];
   var extensionLUT = {html : 'text/html',
                       js   : 'text/javascript',

@@ -1,9 +1,11 @@
+/*jshint node:true*/
 var mysql = require('mysql');
 var http  = require('http');
-var HEL   = require('./httpEventListener.js').httpEventListener;
+var HEL   = require('./httpEventListener.js').HttpEventListener;
 var fs    = require('fs');
 var url   = require('url');
 var dgram = require('dgram');
+
 
 //parameters
 var table_name = 'manager';
@@ -12,6 +14,7 @@ var keystr = "obqQm3gtDFZdaYlENpIYiKzl+/qARDQRmiWbYhDW9wreM/APut73nnxCBJ8a7PwW";
 
 ///////////////////////////////// MINIMAL MANAGER //////////////////////////////
 function Manager(listen_port){
+  "use strict";
   HEL.call(this,'action',listen_port);
   this.port = listen_port;
   this.devices = {};  //a hash table of known devices keyed by uuid
@@ -36,6 +39,7 @@ function Manager(listen_port){
 Manager.prototype = Object.create(HEL.prototype);
 Manager.prototype.constructor = Manager;
 Manager.prototype.addDevice = function(device) {
+  "use strict";
   //
   //Add a device to the known devices list.
   //
@@ -45,8 +49,9 @@ Manager.prototype.addDevice = function(device) {
   console.log("adding dev:");
   console.dir(device);
   this.devices[device.uuid.toLowerCase()] = device;
-}
+};
 Manager.prototype.storeData = function(fields, response) {
+  "use strict";
   //
   // Event handler for store
   // fields: the query fields and post data
@@ -54,8 +59,9 @@ Manager.prototype.storeData = function(fields, response) {
   //
   var dbconnection = this.dbconn;
   this.checkDBTable(table_name,function(e){
+    var pd;
     if (fields['@post_data']) {
-      var pd = dbconnection.escape(fields['@post_data']);
+      pd = dbconnection.escape(fields['@post_data']);
     }
     if(e) { //db error
       response.writeHead(503, {'Content-Type': 'text/plain'});
@@ -69,7 +75,7 @@ Manager.prototype.storeData = function(fields, response) {
     } else {
       //TODO: update last seen
       var uuid = dbconnection.escape(fields.uuid);
-      d = new Date();
+      var d = new Date();
       dbconnection.query("INSERT INTO " + table_name +
                         "(epoch,uuid,data) VALUES" +
                         "(" + d.getTime() + ", "+uuid +
@@ -79,8 +85,9 @@ Manager.prototype.storeData = function(fields, response) {
       });
     }
   });
-}
+};
 Manager.prototype.checkDBTable = function(tbl_name,callback) {
+  "use strict";
   //
   // Checks to make sure tabe tbl_name exists
   // if it does not it gets created
@@ -109,9 +116,10 @@ Manager.prototype.checkDBTable = function(tbl_name,callback) {
                       ');',function(e,r){
       setTimeout(callback(e),0);
     });
-  };
-}
+  }
+};
 Manager.prototype.getData = function(fields,response){
+  "use strict";
   //
   //Event handler for ?action=retrieve.
   // fields: the query fields
@@ -137,8 +145,9 @@ Manager.prototype.getData = function(fields,response){
       }
     });
   }
-}
+};
 Manager.prototype.queryDeviceInfo = function(ip,port){
+  "use strict";
   //
   //querys a device for more information
   // ip: the devices ip or host name
@@ -184,8 +193,9 @@ Manager.prototype.queryDeviceInfo = function(ip,port){
       //TODO: decide what to do with the error.
     }
   }).end();
-}
+};
 Manager.prototype.getDevList = function(fields,response) {
+  "use strict";
   //
   // Event handler for ?action=getCode
   // fields: the query fields 
@@ -194,8 +204,9 @@ Manager.prototype.getDevList = function(fields,response) {
   
   response.writeHead(200, {'Content-Type': 'text/plain'});
   response.end(JSON.stringify(this.devices));
-}
+};
 Manager.prototype.forward = function(fields,response) {
+  "use strict";
   if (!fields.uuid) {  
     response.writeHead(400, {'Content-Type': 'text/plain'});
     response.end('missing device uuid');
@@ -227,14 +238,15 @@ Manager.prototype.forward = function(fields,response) {
       }
     }).end();
   }
-}
+};
 Manager.prototype.setupMulticastListener = function(mcastAddr,port){
+  "use strict";
   //
   // Sets up a UDP multicast listener to listen for new devices
   // mcastAddr: the multicast address
   // port: the port to listen on.
   //
-  this_manager = this;
+  var this_manager = this;
   var udpsock = dgram.createSocket('udp4', function (message, remote){
     var m = message.toString();
     var port = NaN;
@@ -246,10 +258,10 @@ Manager.prototype.setupMulticastListener = function(mcastAddr,port){
   });
   udpsock.bind(port);
   udpsock.addMembership(mcastAddr);
-}
+};
 //////////////////////////////STARTUP CODE/////////////////////////////////////
 //if i'm being called from command line
 if(require.main === module) {
-  m=new Manager(9090);
+  var m=new Manager(9090);
 }
 

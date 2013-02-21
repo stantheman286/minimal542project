@@ -1,3 +1,4 @@
+/*global require console setTimeout module*/
 function AbstractApp(divobject,uuid,parent){
   //
   // An abstract app.  While not technically an abstract class it does very
@@ -28,14 +29,14 @@ AbstractApp.prototype.start = function(){
   //
 
   console.log("App.start() is unimplemented!");
-}
+};
 AbstractApp.prototype.update = function() {
   //
   //update whatever needs to be updated in this app
   //
   
   console.log("App.update() is unimplemented!"); 
-}
+};
 AbstractApp.prototype.stop = function() {
   //
   //Stops all timers, close connections etc 
@@ -43,7 +44,7 @@ AbstractApp.prototype.stop = function() {
   
   //nothing to be done for Abstract app.
   clearInterval(this.update_interval_id);
-}
+};
 AbstractApp.prototype.setInterval = function(interval){
   //
   // Sets the update intervnal in ms for the app.
@@ -57,7 +58,7 @@ AbstractApp.prototype.setInterval = function(interval){
     },interval);
   }
   
-}
+};
 
 //////////////////////////////// "Protected" Methods ///////////////////////////
 //Nothing below here is in the specification
@@ -78,7 +79,7 @@ AbstractApp.prototype.sendEvent = function(type,args,cb){
   args.action = type;
   //build up url
   var path = '/?';
-  var once = true;
+  var f = null;
   for (f in args) {
     path += f + "=" + args[f] +"&";
   }
@@ -93,10 +94,10 @@ AbstractApp.prototype.sendEvent = function(type,args,cb){
         cb('Error: '+http.status,http.responseText);
       }
     }
-  }
+  };
   http.send();
   
-}
+};
 AbstractApp.prototype.getUIhtml = function(cb) {
   //
   //Ask manager for html and make tag names unique.
@@ -109,15 +110,15 @@ AbstractApp.prototype.getUIhtml = function(cb) {
   this.sendEvent('forward',{cmd:'getHTML',uuid:this.myuuid},function(e,r){
     var uhtml = r.replace(/(<[^>]+id\=\")/ig,"$1"+"id"+this_uuid);
     cb(e,uhtml);
-  })
-}
+  });
+};
 AbstractApp.prototype.getElement = function(originalID) {
   //
   //similar to getElementById but fixes the ids to comply with whatever
   //  originalID: the tag ID as written in the original html code.
   //
   return document.getElementById("id" + this.myuuid + originalID);
-}
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////// Sub Class /////////////////////////////////
@@ -164,7 +165,7 @@ MyApp.prototype.getAllElements = function(){
   this.event_field = this.getElement("event_field");
   this.query_field = this.getElement("query_field");
   this.send_button = this.getElement("send_button");
-}
+};
 
 //spec says app needs to be named App
 var App = MyApp;
