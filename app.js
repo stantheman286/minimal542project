@@ -62,11 +62,7 @@ AbstractApp.prototype.setInterval = function(interval){
 //////////////////////////////// "Protected" Methods ///////////////////////////
 //Nothing below here is in the specification
 AbstractApp.prototype.sendEvent = function(type,args,cb){
-  // NOTE: THIS IS NOT PART OF THE FORMAL SPEC BECAUSE DASH DOES NOT NEED TO  
-  //       KNOW ABOUT IT.  HOWEVER IT IS STRONGLY RECOMENDED THAT THIS BE 
-  //       IMPLEMENTED TO KEEP YOUR CODE CLEAN.  THINK OF THIS AS A PRIVATE 
-  //       METHOD.
-  // Send an event to the manager, which then sends it to the device.
+  // Send an event to the manager
   // type: string that the device understands.
   // args: arguements to be added to url query string
   //      may either be an object formatted as 
@@ -78,8 +74,6 @@ AbstractApp.prototype.sendEvent = function(type,args,cb){
   //     function(err,resp_str)
   //     err: an error message and status code as string
   //     resp_str: the manager's response as a string.
-  
-  //TODO: fill in 
   
   args.action = type;
   //build up url
