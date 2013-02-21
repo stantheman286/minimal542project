@@ -1,5 +1,6 @@
-/*global require console setTimeout module*/
+/*jshint browser:true devel:true*/
 function AbstractApp(divobject,uuid,parent){
+  "use strict";
   //
   // An abstract app.  While not technically an abstract class it does very
   // little.  At least the following should be overridden:
@@ -24,6 +25,7 @@ function AbstractApp(divobject,uuid,parent){
 }
 
 AbstractApp.prototype.start = function(){
+  "use strict";
   //
   //Starts app and loads gui.
   //
@@ -31,6 +33,7 @@ AbstractApp.prototype.start = function(){
   console.log("App.start() is unimplemented!");
 };
 AbstractApp.prototype.update = function() {
+  "use strict";
   //
   //update whatever needs to be updated in this app
   //
@@ -38,6 +41,7 @@ AbstractApp.prototype.update = function() {
   console.log("App.update() is unimplemented!"); 
 };
 AbstractApp.prototype.stop = function() {
+  "use strict";
   //
   //Stops all timers, close connections etc 
   //
@@ -46,6 +50,7 @@ AbstractApp.prototype.stop = function() {
   clearInterval(this.update_interval_id);
 };
 AbstractApp.prototype.setInterval = function(interval){
+  "use strict";
   //
   // Sets the update intervnal in ms for the app.
   // interval: the interval in ms.  if interval = 0, never autoupdates.
@@ -63,6 +68,7 @@ AbstractApp.prototype.setInterval = function(interval){
 //////////////////////////////// "Protected" Methods ///////////////////////////
 //Nothing below here is in the specification
 AbstractApp.prototype.sendEvent = function(type,args,cb){
+  "use strict";
   // Send an event to the manager
   // type: string that the device understands.
   // args: arguements to be added to url query string
@@ -99,6 +105,7 @@ AbstractApp.prototype.sendEvent = function(type,args,cb){
   
 };
 AbstractApp.prototype.getUIhtml = function(cb) {
+  "use strict";
   //
   //Ask manager for html and make tag names unique.
   //  cb: call back function function (error,uniquifiedHTML){...}
@@ -113,6 +120,7 @@ AbstractApp.prototype.getUIhtml = function(cb) {
   });
 };
 AbstractApp.prototype.getElement = function(originalID) {
+  "use strict";
   //
   //similar to getElementById but fixes the ids to comply with whatever
   //  originalID: the tag ID as written in the original html code.
