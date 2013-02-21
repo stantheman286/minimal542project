@@ -43,15 +43,15 @@ function Device(listen_port) {
   this.addEventHandler('info',this.info);
   this.addEventHandler('acquire',this.acquire);
   
-  //advertize that i'm here every 10 seconds until i'm aquired
+  //advertise that i'm here every 10 seconds until i'm aquired
   var this_device = this;
   this.advert_timer = setInterval(function(){
-    this_device.advertize('224.250.67.238',17768);
+    this_device.advertise('224.250.67.238',17768);
   },10000) ;
 }
 Device.prototype = Object.create(HEL.prototype);
 Device.prototype.constructor = Device;
-Device.prototype.advertize = function(mcastAddr,mport) {
+Device.prototype.advertise = function(mcastAddr,mport) {
   //broadcast on a specified multicast address/port that you exist
   // mcastAddr: the multicast address
   // mport: the port to listen on.
