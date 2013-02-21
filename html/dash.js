@@ -1,7 +1,7 @@
 
 window.onload = function(){
   var dash = new Dashboard();
-}
+};
 
 function Dashboard(){
   //
@@ -30,7 +30,7 @@ Dashboard.prototype.dbg = function(msg) {
   // print debug message in the debug div
   //
   this.dbg_elem.innerHTML = msg + '<br>' + this.dbg_elem.innerHTML;
-}
+};
 
 //get list of devices
 Dashboard.prototype.update = function() {
@@ -45,16 +45,17 @@ Dashboard.prototype.update = function() {
       this_dash.devices = JSON.parse(http.responseText);
       this_dash.devlist_elem.innerHTML = '';
       //for each device build a bar in the GUI
-      for (devuuid in this_dash.devices) {
+      var addAppGenerator = function(u){
+        return function(){
+          this_dash.addapp(u);
+        };
+      };
+      for (var devuuid in this_dash.devices) {
         var dev_button = document.createElement("button");
         dev_button.type = 'button';
         dev_button.innerHTML = 'launch';
         // "evaluate" uuid right now
-        dev_button.onclick = (function(u){
-          return function(){
-            this_dash.addapp(u);
-          }
-        })(devuuid);
+        dev_button.onclick = addAppGenerator(devuuid);
         var dev_div = document.createElement("div");
         dev_div.setAttribute('class','app_listitem');
         var dev_descr = this_dash.devices[devuuid].name + ": " +
@@ -67,7 +68,7 @@ Dashboard.prototype.update = function() {
     }
   };
   http.send();
-}
+};
 Dashboard.prototype.addapp = function(uuid) {
   //
   // Launches App
@@ -92,9 +93,9 @@ Dashboard.prototype.addapp = function(uuid) {
       var this_app = new App(app_element,uuid,this_dash);
       this_app.start();
     }
-  }
+  };
   http.send();
-}
+};
 Dashboard.prototype.stop = function(uuid) {
   //
   // Calls the apps stop method then tears down the HTML div that contained
@@ -104,7 +105,7 @@ Dashboard.prototype.stop = function(uuid) {
   // TODO: STOP the app 
   this.dbg('stop called on: ' + this.devices[uuid].name +
            "; stop unimplemented");
-}
+};
 Dashboard.prototype.login = function() {
   //
   // Does login stuff
@@ -112,7 +113,7 @@ Dashboard.prototype.login = function() {
   
   //todo implement
   this.dbg('login unimplemented');
-}
+};
 Dashboard.prototype.logout = function() {
   //
   // Does logout stuff
@@ -120,7 +121,7 @@ Dashboard.prototype.logout = function() {
   
   //todo implement
   this.dbg('logout unimplemented');
-}
+};
 Dashboard.prototype.loadScript = function(scriptSrc,callback) {
   //
   // Loads a script dynamically.
@@ -135,7 +136,7 @@ Dashboard.prototype.loadScript = function(scriptSrc,callback) {
     oScript.onload = callback;
   }
   oHead.appendChild(oScript);
-}
+};
 
 function getApp(appCodeText){
   //
