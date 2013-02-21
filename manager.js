@@ -12,7 +12,7 @@ var table_name = 'manager';
 var dash_HTML  = './dash.html';
 var keystr = "obqQm3gtDFZdaYlENpIYiKzl+/qARDQRmiWbYhDW9wreM/APut73nnxCBJ8a7PwW";
 
-///////////////////////////////// MINIMAL MANAGER //////////////////////////////
+///////////////////////////////////// MANAGER //////////////////////////////////
 function Manager(listen_port){
   "use strict";
   HEL.call(this,'action',listen_port);
@@ -31,13 +31,9 @@ function Manager(listen_port){
   this.addEventHandler('forward',this.forward);
   
   this.setupMulticastListener('224.250.67.238',17768);
-  
-  //add the dummy device for now
-  //TODO: delete this and implement the discovery protocol
-  //this.queryDeviceInfo('127.0.0.1',8080);
 }
 Manager.prototype = Object.create(HEL.prototype);
-Manager.prototype.constructor = Manager;
+Manager.prototype.constructor = Manager;  
 Manager.prototype.addDevice = function(device) {
   "use strict";
   //
@@ -78,7 +74,7 @@ Manager.prototype.storeData = function(fields, response) {
       var d = new Date();
       dbconnection.query("INSERT INTO " + table_name +
                         "(epoch,uuid,data) VALUES" +
-                        "(" + d.getTime() + ", "+uuid +
+                        "(" + d.getTime() + ", "+uuid + //getTime() is in mS
                         ", " + pd + ");",function(e,r){
         response.writeHead(200, {'Content-Type': 'text/plain'});
         response.end('wrote '+fields['@post_data'].length+' bytes.');
@@ -125,14 +121,27 @@ Manager.prototype.getData = function(fields,response){
   // fields: the query fields
   // response: the http.ServerResponse object.
   //
+  var since = parseInt(fields.since,10);
+  var q,order;
+  var timeArg = '';
+  
   if (!fields.uuid) {
     response.writeHead(400, {'Content-Type': 'text/plain'});
     response.end('missing device uuid');
   } else {
-    //TODO: handle the since argument
-    this.dbconn.query("SELECT data FROM " + table_name + " Where uuid LIKE " +
-                      this.dbconn.escape(fields.uuid) + " ORDER BY id;",
-                      function(e,r) {
+    //construct the query
+    if( since ){
+      timeArg = " AND epoch > " + since+" ";
+    }
+    if (fields.since === "latest") {
+      order = " ORDER BY id DESC LIMIT 1;"; //most recent
+    } else {
+      order = " ORDER BY id ASC;";
+    }
+    q = "SELECT data FROM " + table_name + " WHERE uuid LIKE " +
+            this.dbconn.escape(fields.uuid) + timeArg + order;
+    
+    this.dbconn.query(q, function(e,r) {
       if(e) {
         response.writeHead(503, {'Content-Type': 'text/plain'});
         response.end('database error: ' + e);
