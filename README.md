@@ -58,9 +58,6 @@ HTTP queries to be implemented:
 
 To be implemented:
 
--   Currently getData only returns ALL data and does not process the 'since'
-    field
-    
 -   storeBig action is unimplemented.
 
 -   forward of post data is unimplemented.
