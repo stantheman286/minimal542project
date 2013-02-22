@@ -149,7 +149,7 @@ MyApp.prototype.start = function() {
   //
 
   //set some attributes for the app div
-  this.div.style.cssText = "background-color:#BFB";
+  this.div.style.backgroundColor = "#BBFFBB";
   
   var this_app = this;
   this.getUIhtml(function(e,h){

@@ -17,19 +17,15 @@ function Dashboard(){
   //get all elements
   this.main_elem = document.getElementById('apps');
   this.devlist_elem = document.getElementById('dev_list');
-  this.dbg_elem = document.getElementById('debug');
   
-  this.dbg(this.manager_hostname);
-  this.dbg(this.manager_port);
-  this.dbg('Dash created');
   this.update();
 }
 
 Dashboard.prototype.dbg = function(msg) {
   //
-  // print debug message in the debug div
+  // print debug message 
   //
-  this.dbg_elem.innerHTML = msg + '<br>' + this.dbg_elem.innerHTML;
+  console.log(msg);
 };
 
 //get list of devices
@@ -85,13 +81,15 @@ Dashboard.prototype.addapp = function(uuid) {
   http.onreadystatechange=function(){
     if (http.readyState==4 && http.status == 200) {
       App = getApp(http.responseText);
-      //now make a div for the app to live in.
-      var app_element = document.createElement('div');
-      this_dash.main_elem.appendChild(app_element);
-      app_element.setAttribute("class","app_container");
+      var elements = this_dash.buildAppWindow(this_dash.devices[uuid].name);
       // now hand the div to the app.
-      var this_app = new App(app_element,uuid,this_dash);
+      var this_app = new App(elements.app,uuid,this_dash);
       this_app.start();
+      //TODO: add close callback to elements.close
+      elements.close.addEventListener('click',function(){
+        this_app.stop();
+        elements.window.parentNode.removeChild(elements.window);
+      });
     }
   };
   http.send();
@@ -136,6 +134,38 @@ Dashboard.prototype.loadScript = function(scriptSrc,callback) {
     oScript.onload = callback;
   }
   oHead.appendChild(oScript);
+};
+
+Dashboard.prototype.buildAppWindow = function(window_title){
+  //
+  // builds an app window with things like close buttons
+  //
+  // returns: a div object which is controlled 100% by the app
+  var outer_div = document.createElement('div');
+  outer_div.setAttribute("class","app_container");
+  
+  var app_title_div = document.createElement('div');
+  app_title_div.setAttribute("class","app_title_bar");
+  app_title_div.style.backgroundColor = "#ddd";
+  
+  var close_btn = document.createElement('div');
+  close_btn.setAttribute("class","round_btn");
+  close_btn.style.backgroundColor = "#d00";
+  close_btn.style.borderRadius = "8px";
+  
+  var title_txt = document.createTextNode(window_title);
+  
+  var app_element = document.createElement('div');
+  app_element.setAttribute("class","app");
+  
+  //build structure
+  this.main_elem.appendChild(outer_div);
+    outer_div.appendChild(app_title_div)
+      app_title_div.appendChild(close_btn);
+      app_title_div.appendChild(title_txt);
+    outer_div.appendChild(app_element);
+  
+  return {app: app_element, close: close_btn, window: outer_div};
 };
 
 function getApp(appCodeText){
