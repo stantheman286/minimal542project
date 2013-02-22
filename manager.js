@@ -230,8 +230,11 @@ Manager.prototype.forward = function(fields,response) {
       path: url.format({query: fields,pathname: '/'}),
       method: 'GET',
     };
+    if(fields['@post_data']) {
+      options.method = 'POST';
+    }
     var app_code = '';
-    http.request(options, function(res) {
+    var fwd_req = http.request(options, function(res) {
       if (res.statusCode == 200) {
         res.setEncoding('utf8');
         res.on('data', function(chunk){
@@ -245,7 +248,14 @@ Manager.prototype.forward = function(fields,response) {
         response.writeHead(503, {'Content-Type': 'text/plain'});
         response.end("device error");
       }
-    }).end();
+    });
+    
+    if(fields['@post_data']) {
+      fwd_req.end(fields['@post_data']);
+    } else {
+      fwd_req.end();
+    }
+    
   }
 };
 Manager.prototype.setupMulticastListener = function(mcastAddr,port){
