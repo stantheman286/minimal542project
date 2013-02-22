@@ -43,16 +43,12 @@ The following is a, most likely, incomplete list of unimplemented components
 
 ### Device
 
-This is just a sample device. Right now it only responds to getCode and info
-requests.  ie the bare minimum to load an app.
-HTTP queries to be implemented:
--   ping 
--   acquire - called by manager to associate the device with the manager
--   implementation specific stuff like handling messages from app and storing data
+This is just a sample device. It does very little
+
 
 ### App
 
--   note: when subclassing App most methods will have to be overridden.  Only helper methods such as getUIhtml and sendEvent will probably be unchanged.
+-   note: when subclassing App most methods will have to be overridden.  see AbstractApp comments.
 
 ### Manager
 
@@ -60,18 +56,9 @@ To be implemented:
 
 -   storeBig action is unimplemented.
 
--   forward of post data is unimplemented.
-
 ### Dash
 
-This is more of an example implementation.  The only thing dash.js really needs
-are the data fields:
-
--   .devices
-
--   .manager_hostname
-
--   .manager_port
+Minimal implementation.  Very low on gui features.
 
 In terms of a UI nothing has really been speced out yet.
 
