@@ -225,7 +225,7 @@ Manager.prototype.forward = function(fields,response) {
   } else {
     
     var options = {
-      host: this.devices[fields.uuid].addr,
+      host: this.devices[fields.uuid].ip,
       port: this.devices[fields.uuid].port,
       path: url.format({query: fields,pathname: '/'}),
       method: 'GET',
