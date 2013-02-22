@@ -1,4 +1,4 @@
-
+/*jshint browser:true devel:true evil:true*/
 window.onload = function(){
   var dash = new Dashboard();
 };
@@ -74,6 +74,7 @@ Dashboard.prototype.addapp = function(uuid) {
   // TODO: keep track of app windows, right now it just fires-and-forgets
   var this_dash = this;
   var http = new XMLHttpRequest();
+  var App;
   
   this.dbg ('adding app...');
   
@@ -126,10 +127,11 @@ Dashboard.prototype.loadScript = function(scriptSrc,callback) {
   // scriptSrc: a string containing the source of the script
   // callback: a callback function called when the script has loaded
   //
+  // NOTE: untested
   var oHead = document.getElementsByTagName('head');
   var oScript = document.createElement('script');
   oScript.type = 'text/javascript';
-  oScript.src = sScriptSrc;
+  oScript.src = scriptSrc;
   if (callback) {
     oScript.onload = callback;
   }
@@ -160,7 +162,7 @@ Dashboard.prototype.buildAppWindow = function(window_title){
   
   //build structure
   this.main_elem.appendChild(outer_div);
-    outer_div.appendChild(app_title_div)
+    outer_div.appendChild(app_title_div);
       app_title_div.appendChild(close_btn);
       app_title_div.appendChild(title_txt);
     outer_div.appendChild(app_element);

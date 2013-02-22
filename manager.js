@@ -92,6 +92,7 @@ Manager.prototype.checkDBTable = function(tbl_name,callback) {
   //           callback(error)
   //           error: the error string retuned by mysql or null if success
   //
+  var this_manager = this;
   
   this.dbconn.query("SHOW TABLES LIKE '"+tbl_name+"';", function(e,r) {
     if (!e && r.length < 1){
@@ -103,7 +104,7 @@ Manager.prototype.checkDBTable = function(tbl_name,callback) {
   });
   
   function makeTable(){
-    this.dbconn.query('CREATE TABLE '+tbl_name+' (' +
+    this_manager.dbconn.query('CREATE TABLE '+tbl_name+' (' +
                        'id INT NOT NULL AUTO_INCREMENT, ' +
                        'epoch BIGINT NOT NULL, ' + 
                        'uuid CHAR(36) NOT NULL, ' +

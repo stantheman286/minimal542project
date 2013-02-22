@@ -23,14 +23,14 @@ function Device(listen_port) {
   
   //Compute uuid
   var unique_str = OS.hostname()+listen_port;
-  if (OS.type() == 'Linux'){
+  if (OS.type() === 'Linux'){
     //TODO: fill in for linux the MAC addr + listen_port
     //unique_str = mac addr + listen_port;
   } 
   //make uuid from unique string, roughly following uuid v5 spec 
   var hash = crypto.createHash('sha1').update(unique_str).digest('hex');
-  this.uuid = hash.substr(0,8)+"-"+hash.substr(8,4)+"-5"+hash.substr(12,3)
-              +"-b"+hash.substr(15,3)+"-"+hash.substr(18,12);
+  this.uuid = hash.substr(0,8)+"-"+hash.substr(8,4)+"-5"+hash.substr(12,3) +
+              "-b"+hash.substr(15,3)+"-"+hash.substr(18,12);
               
   //init device info
   this.port   = listen_port;
@@ -132,8 +132,9 @@ function getHTMLEvent(event_data, response) {
 //if i'm being called from command line
 if(require.main === module) {
   var d1 = new Device(8080);
+  var d2;
   setTimeout(function(){
-    var d2 = new Device(8081);
+    d2 = new Device(8081);
   },1000);
 }
 

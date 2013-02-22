@@ -80,7 +80,7 @@ HttpEventListener.prototype.manageHTTPRequest = function(request,response) {
     
   };
   
-  if (request.method == 'POST') {
+  if (request.method === 'POST') {
     request.on('data',function(d){
       post_data += d;
     });
