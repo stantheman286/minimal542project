@@ -8,7 +8,7 @@ var dgram = require('dgram');
 
 
 //parameters
-var table_name = 'manager';
+var table_name = 'manager2';
 var dash_HTML  = './dash.html';
 var keystr = "obqQm3gtDFZdaYlENpIYiKzl+/qARDQRmiWbYhDW9wreM/APut73nnxCBJ8a7PwW";
 

@@ -1,8 +1,8 @@
 {
   "_comment"    : "rename me to dbconfig.JSON after filling in the fields below"
   "host"        : "vergil.u.washington.edu",
-  "port"        : 12345,
-  "user"        : "myDBuser",
+  "port"        : 48236,
+  "user"        : "matt",
   "database"    : "ee542",
   "password"    : "myDBpassword"
 }
