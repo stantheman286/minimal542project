@@ -41,6 +41,7 @@ function Device(listen_port) {
   this.addEventHandler('getCode',getCodeEvent); 
   this.addEventHandler('getHTML',getHTMLEvent); 
   this.addEventHandler('info',this.info);
+  this.addEventHandler('ping',this.info);
   this.addEventHandler('acquire',this.acquire);
   
   //advertise that i'm here every 10 seconds until i'm aquired
