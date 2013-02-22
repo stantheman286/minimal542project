@@ -1,5 +1,5 @@
 {
-  "_comment"    : "rename me to dbconfig.JSON after filling in the fields below"
+  "_comment"    : "rename me to dbconfig.JSON after filling in the fields below",
   "host"        : "vergil.u.washington.edu",
   "port"        : 48236,
   "user"        : "matt",
