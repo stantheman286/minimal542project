@@ -8,7 +8,7 @@ var dgram = require('dgram');
 
 
 //parameters
-var table_name = 'manager2';
+var table_name = 'manager';
 var dash_HTML  = './dash.html';
 var keystr = "obqQm3gtDFZdaYlENpIYiKzl+/qARDQRmiWbYhDW9wreM/APut73nnxCBJ8a7PwW";
 
@@ -92,7 +92,9 @@ Manager.prototype.checkDBTable = function(tbl_name,callback) {
   //           callback(error)
   //           error: the error string retuned by mysql or null if success
   //
-  
+
+  var that = this;
+
   this.dbconn.query("SHOW TABLES LIKE '"+tbl_name+"';", function(e,r) {
     if (!e && r.length < 1){
       makeTable();
@@ -103,7 +105,7 @@ Manager.prototype.checkDBTable = function(tbl_name,callback) {
   });
   
   function makeTable(){
-    this.dbconn.query('CREATE TABLE '+tbl_name+' (' +
+    that.dbconn.query('CREATE TABLE '+tbl_name+' (' +
                        'id INT NOT NULL AUTO_INCREMENT, ' +
                        'epoch BIGINT NOT NULL, ' + 
                        'uuid CHAR(36) NOT NULL, ' +
