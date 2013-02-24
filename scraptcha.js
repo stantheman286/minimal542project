@@ -1,7 +1,8 @@
 //
-//  Dummy device.  invoked using nodejs
+//  Scraptcha device.  invoked using nodejs
 //
 
+var http = require('http');
 var fs   = require('fs');
 var HEL  = require('./httpEventListener.js').HttpEventListener;
 var OS   = require('os');
@@ -11,7 +12,7 @@ var dgram = require('dgram');
 //some parameters.  they should go in a config file later:
 var app_code_path  = 'app.js';
 var html_code_path = 'app.html';
-var name           = 'Dummy Device';
+var name           = 'Scraptcha';
 var keystr = "obqQm3gtDFZdaYlENpIYiKzl+/qARDQRmiWbYhDW9wreM/APut73nnxCBJ8a7PwW";
 
 /////////////////////////////// A basic device /////////////////////////////////
@@ -38,6 +39,7 @@ function Device(listen_port) {
   this.state  = "none"; //no other state for such a simple device
 
   //add apps events here
+  this.addEventHandler('getPicture',this.getPicture); 
   this.addEventHandler('getCode',getCodeEvent); 
   this.addEventHandler('getHTML',getHTMLEvent); 
   this.addEventHandler('info',this.info);
@@ -98,6 +100,8 @@ Device.prototype.acquire = function(fields,response) {
   this.manager_port = parseInt(fields.port,10);
   this.manager_IP  = fields['@ip'] ;
   clearInterval(this.advert_timer);
+
+  this.getPicture();  //ms: test, wait until acquired
 };
 function getCodeEvent(event_data, response) {
   //gets the app code and sends it in the response body
@@ -127,11 +131,39 @@ function getHTMLEvent(event_data, response) {
     }
   });
 }
+Device.prototype.getPicture = function(fields,response) {
+
+  var options = {
+    hostname: this.manager_IP,
+    port: this.manager_port,
+    path: '/?action=store&uuid=' + this.uuid,
+    method: 'POST'
+  };
+
+  var req = http.request(options, function(res) {
+    console.log('STATUS: ' + res.statusCode);
+    console.log('HEADERS: ' + JSON.stringify(res.headers));
+    res.setEncoding('utf8');
+    res.on('data', function (chunk) {
+      console.log('BODY: ' + chunk);
+    });
+  });
+
+  req.on('error', function(e) {
+    console.log('problem with request: ' + e.message);
+  });
+
+  // write data to request body
+  req.write('Matt\'s data!!!');
+  req.end();
+
+}
 
 ///////////////////////////////////// MAIN ////////////////////////////////////
 //if i'm being called from command line
 if(require.main === module) {
   var d1 = new Device(1337);
+
 //  setTimeout(function(){
 //    var d2 = new Device(8081);
 //  },1000);
