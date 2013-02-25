@@ -136,7 +136,7 @@ Device.prototype.getPicture = function(fields,response) {
   var options = {
     hostname: this.manager_IP,
     port: this.manager_port,
-    path: '/?action=store&uuid=' + this.uuid,
+    path: '/?action=storeBig&uuid=' + this.uuid,
     method: 'POST'
   };
 
@@ -153,8 +153,11 @@ Device.prototype.getPicture = function(fields,response) {
     console.log('problem with request: ' + e.message);
   });
 
-  // write data to request body
-  req.write('Matt\'s data!!!');
+  // Read data from file
+  var data = fs.readFileSync('./test.jpg');
+
+  // Write data to request body
+  req.write(data);
   req.end();
 
 }

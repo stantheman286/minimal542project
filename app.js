@@ -149,9 +149,10 @@ MyApp.prototype.start = function() {
   //
 
   //set some attributes for the app div
-  this.div.style.backgroundColor = "#BBFFBB";
+  this.div.style.backgroundColor = "#99CCCC";
   
   var this_app = this;
+  var this_uuid = this.myuuid;
   this.getUIhtml(function(e,h){
     this_app.div.innerHTML = h;
     this_app.getAllElements();
@@ -163,7 +164,15 @@ MyApp.prototype.start = function() {
         this_app.dash.dbg(resp);
       });
     });   
+
+    // Load latest image into app
+    this_app.sendEvent('retrieve',{since: 'latest', uuid:this_uuid},function(e,r){
+      this_app.picture.innerHTML = r;
+    });
+
+
   });
+
 };
 // This app has nothing to do on update
 MyApp.prototype.update = function(){};
@@ -173,6 +182,7 @@ MyApp.prototype.getAllElements = function(){
   this.event_field = this.getElement("event_field");
   this.query_field = this.getElement("query_field");
   this.send_button = this.getElement("send_button");
+  this.picture = this.getElement("picture");
 };
 
 //spec says app needs to be named App
