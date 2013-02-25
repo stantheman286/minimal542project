@@ -1,4 +1,10 @@
 /*jshint browser:true devel:true evil:true*/
+
+//wrap in scope so jQuery doesn't get renamed
+//note this means that dash.js must get called right after jquery
+jQuery.noConflict();
+(function(jQuery){
+
 window.onload = function(){
   var dash = new Dashboard();
 };
@@ -17,6 +23,9 @@ function Dashboard(){
   //get all elements
   this.main_elem = document.getElementById('apps');
   this.devlist_elem = document.getElementById('dev_list');
+  
+  //setup some GUI stuff
+  jQuery("#apps").sortable({revert:true, handle:".app_title_bar"});
   
   this.update();
 }
@@ -153,7 +162,11 @@ Dashboard.prototype.buildAppWindow = function(window_title){
   var close_btn = document.createElement('div');
   close_btn.setAttribute("class","round_btn");
   close_btn.style.backgroundColor = "#d00";
-  close_btn.style.borderRadius = "8px";
+  
+  var min_btn = document.createElement('div');
+  min_btn.setAttribute("class","round_btn");
+  min_btn.style.right = "20px";
+  min_btn.style.backgroundColor = "#ee0"
   
   var title_txt = document.createTextNode(window_title);
   
@@ -164,6 +177,7 @@ Dashboard.prototype.buildAppWindow = function(window_title){
   this.main_elem.appendChild(outer_div);
     outer_div.appendChild(app_title_div);
       app_title_div.appendChild(close_btn);
+      app_title_div.appendChild(min_btn);
       app_title_div.appendChild(title_txt);
     outer_div.appendChild(app_element);
   
@@ -178,3 +192,5 @@ function getApp(appCodeText){
   eval(appCodeText);
   return App;
 }
+
+})(jQuery);

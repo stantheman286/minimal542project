@@ -18,6 +18,7 @@ function Manager(listen_port){
   HEL.call(this,'action',listen_port);
   this.port = listen_port;
   this.devices = {};  //a hash table of known devices keyed by uuid
+  this.insert_seq = 0;
    
   //read dbconfig from an external file that is not part of the code repository
   var dbconfigTEXT = fs.readFileSync('./dbconfig.JSON','utf8');
@@ -54,8 +55,11 @@ Manager.prototype.storeData = function(fields, response) {
   // response: the http.ServerResponse object.
   //
   var dbconnection = this.dbconn;
+  this.insert_seq = (this.insert_seq + 1)%1000;
+  var insert_seq = this.insert_seq;
+  
   this.checkDBTable(table_name,function(e){
-    var pd;
+    var pd, d, uuid;
     if (fields['@post_data']) {
       pd = dbconnection.escape(fields['@post_data']);
     }
@@ -70,12 +74,16 @@ Manager.prototype.storeData = function(fields, response) {
       response.end('post data too large try storeBIG action');
     } else {
       //TODO: update last seen
-      var uuid = dbconnection.escape(fields.uuid);
-      var d = new Date();
+      uuid = dbconnection.escape(fields.uuid);
+      d = new Date();
+      //note: insert_seq is appended to the getTime() value to uniqueify it
+      //a collision will only happen if there are >1000 inserts per milisecond.
       dbconnection.query("INSERT INTO " + table_name +
-                        "(epoch,uuid,data) VALUES" +
-                        "(" + d.getTime() + ", "+uuid + //getTime() is in mS
-                        ", " + pd + ");",function(e,r){
+                        "(epoch,uuid,data) VALUES (" +
+                        String(d.getTime()*1000 + insert_seq) +
+                        ", " + uuid + 
+                        ", " + pd +
+                        ");",function(e,r){
         response.writeHead(200, {'Content-Type': 'text/plain'});
         response.end('wrote '+fields['@post_data'].length+' bytes.');
       });
@@ -105,11 +113,12 @@ Manager.prototype.checkDBTable = function(tbl_name,callback) {
   
   function makeTable(){
     this_manager.dbconn.query('CREATE TABLE '+tbl_name+' (' +
-                       'id INT NOT NULL AUTO_INCREMENT, ' +
-                       'epoch BIGINT NOT NULL, ' + 
+                       'epoch BIGINT UNSIGNED NOT NULL, ' + 
                        'uuid CHAR(36) NOT NULL, ' +
                        'data VARCHAR(1024), ' +
-                       'PRIMARY KEY (id) ' +
+                       //'big MEDIUMBLOB' +
+                       'PRIMARY KEY (epoch), ' +
+                       'INDEX (uuid)' +
                       ');',function(e,r){
       setTimeout(callback(e),0);
     });
