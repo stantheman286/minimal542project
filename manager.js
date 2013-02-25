@@ -27,6 +27,7 @@ function Manager(listen_port){
   
   this.addEventHandler('storeBig',this.storeBigData);
   this.addEventHandler('store',this.storeData);
+  this.addEventHandler('retrieveBig',this.getBigData);
   this.addEventHandler('retrieve',this.getData);
   this.addEventHandler('list',this.getDevList);
   this.addEventHandler('forward',this.forward);
@@ -189,6 +190,48 @@ Manager.prototype.getData = function(fields,response){
         for (var i = 0; i<r.length; i++){
           response.write(r[i].data + "\n");
         }
+        response.end();
+      }
+    });
+  }
+};
+Manager.prototype.getBigData = function(fields,response){
+  "use strict";
+  //
+  //Event handler for ?action=retrieveBig.
+  // fields: the query fields
+  // response: the http.ServerResponse object.
+  //
+  var since = parseInt(fields.since,10);
+  var q,order;
+  var timeArg = '';
+  
+  if (!fields.uuid) {
+    response.writeHead(400, {'Content-Type': 'text/plain'});
+    response.end('missing device uuid');
+  } else {
+    //construct the query
+    if( since ){
+      timeArg = " AND epoch > " + since+" ";
+    }
+    if (fields.since === "latest") {
+      order = " ORDER BY id DESC LIMIT 1;"; //most recent
+    } else {
+      order = " ORDER BY id ASC;";
+    }
+    q = "SELECT bigData FROM " + table_name + " WHERE uuid LIKE " +
+            this.dbconn.escape(fields.uuid) + timeArg + order;
+    
+    this.dbconn.query(q, function(e,r) {
+      if(e) {
+        response.writeHead(503, {'Content-Type': 'text/plain'});
+        response.end('database error: ' + e);
+      } else {
+        response.writeHead(200, {'Content-Type': 'image/jpeg'});
+        //for (var i = 0; i<r.length; i++){
+        //  response.write( r[i].bigData );
+       // }
+        response.write( r[0].bigData );
         response.end();
       }
     });
