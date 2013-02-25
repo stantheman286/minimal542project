@@ -154,10 +154,10 @@ Device.prototype.getPicture = function(fields,response) {
   });
 
   // Read data from file
-  var data = fs.readFileSync('./test.jpg');
+  var myData = fs.readFileSync('./test.jpg');
 
   // Write data to request body
-  req.write(data);
+  req.write(myData);
   req.end();
 
 }
