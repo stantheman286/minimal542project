@@ -8,7 +8,8 @@ var dgram = require('dgram');
 
 
 //parameters
-var table_name = 'manager';
+var data_table_name = 'manager';
+var big_table_name = 'managerBig';
 var dash_HTML  = './dash.html';
 var keystr = "obqQm3gtDFZdaYlENpIYiKzl+/qARDQRmiWbYhDW9wreM/APut73nnxCBJ8a7PwW";
 
@@ -58,7 +59,7 @@ Manager.prototype.storeData = function(fields, response) {
   this.insert_seq = (this.insert_seq + 1)%1000;
   var insert_seq = this.insert_seq;
   
-  this.checkDBTable(table_name,function(e){
+  this.checkDBTable(data_table_name,function(e){
     var pd, d, uuid;
     if (fields['@post_data']) {
       pd = dbconnection.escape(fields['@post_data']);
@@ -78,7 +79,7 @@ Manager.prototype.storeData = function(fields, response) {
       d = new Date();
       //note: insert_seq is appended to the getTime() value to uniqueify it
       //a collision will only happen if there are >1000 inserts per milisecond.
-      dbconnection.query("INSERT INTO " + table_name +
+      dbconnection.query("INSERT INTO " + data_table_name +
                         "(epoch,uuid,data) VALUES (" +
                         String(d.getTime()*1000 + insert_seq) +
                         ", " + uuid + 
@@ -101,28 +102,32 @@ Manager.prototype.checkDBTable = function(tbl_name,callback) {
   //           error: the error string retuned by mysql or null if success
   //
   var this_manager = this;
+  var q = ''; //the query string
+  if  ((tbl_name !== data_table_name) && (tbl_name !== big_table_name)) {
+    callback("ERROR: table unknown"); 
+  }
   
   this.dbconn.query("SHOW TABLES LIKE '"+tbl_name+"';", function(e,r) {
-    if (!e && r.length < 1){
-      makeTable();
+    if (!e && r.length < 1 ){
+      q = 'CREATE TABLE '+data_table_name+' (' +
+          'epoch BIGINT UNSIGNED NOT NULL, ' + 
+          'uuid CHAR(36) NOT NULL, ' +
+          ((tbl_name === data_table_name) ? ' data ' : ' meta ') +
+          'VARCHAR(1024), ' +
+          ((tbl_name === data_table_name) ? '' : ' bigdata MEDIUMBLOB, '  ) +
+          'PRIMARY KEY (epoch), ' +
+          'INDEX (uuid)' +');';
+      console.log("ADDING TABLE: \n" + q);
+      this_manager.dbconn.query(q,function(e,r){
+        setTimeout(callback(e),0);
+      });
+        
     } else {
       //queue up callbackfn
       setTimeout(callback(e),0);
     }
   });
   
-  function makeTable(){
-    this_manager.dbconn.query('CREATE TABLE '+tbl_name+' (' +
-                       'epoch BIGINT UNSIGNED NOT NULL, ' + 
-                       'uuid CHAR(36) NOT NULL, ' +
-                       'data VARCHAR(1024), ' +
-                       //'big MEDIUMBLOB' +
-                       'PRIMARY KEY (epoch), ' +
-                       'INDEX (uuid)' +
-                      ');',function(e,r){
-      setTimeout(callback(e),0);
-    });
-  }
 };
 Manager.prototype.getData = function(fields,response){
   "use strict";
@@ -144,11 +149,11 @@ Manager.prototype.getData = function(fields,response){
       timeArg = " AND epoch > " + since+" ";
     }
     if (fields.since === "latest") {
-      order = " ORDER BY id DESC LIMIT 1;"; //most recent
+      order = " ORDER BY epoch DESC LIMIT 1;"; //most recent
     } else {
-      order = " ORDER BY id ASC;";
+      order = " ORDER BY epoch ASC;";
     }
-    q = "SELECT data FROM " + table_name + " WHERE uuid LIKE " +
+    q = "SELECT data FROM " + data_table_name + " WHERE uuid LIKE " +
             this.dbconn.escape(fields.uuid) + timeArg + order;
     
     this.dbconn.query(q, function(e,r) {
