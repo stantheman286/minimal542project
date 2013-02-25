@@ -25,6 +25,7 @@ function Manager(listen_port){
   this.dbconn = mysql.createConnection(dbconfig);
   this.dbconn.connect();
   
+  this.addEventHandler('storeBig',this.storeBigData);
   this.addEventHandler('store',this.storeData);
   this.addEventHandler('retrieve',this.getData);
   this.addEventHandler('list',this.getDevList);
@@ -74,6 +75,42 @@ Manager.prototype.storeData = function(fields, response) {
       var d = new Date();
       dbconnection.query("INSERT INTO " + table_name +
                         "(epoch,uuid,data) VALUES" +
+                        "(" + d.getTime() + ", "+uuid + //getTime() is in mS
+                        ", " + pd + ");",function(e,r){
+        response.writeHead(200, {'Content-Type': 'text/plain'});
+        response.end('wrote '+fields['@post_data'].length+' bytes.');
+      });
+    }
+  });
+};
+Manager.prototype.storeBigData = function(fields, response) {
+  "use strict";
+  //
+  // Event handler for storeBig
+  // fields: the query fields and post data
+  // response: the http.ServerResponse object.
+  //
+  var dbconnection = this.dbconn;
+  this.checkDBTable(table_name,function(e){
+    var pd;
+    if (fields['@post_data']) {
+      pd = dbconnection.escape(fields['@post_data']);
+    }
+    if(e) { //db error
+      response.writeHead(503, {'Content-Type': 'text/plain'});
+      response.end('database error: ' + e);
+    } else if (!fields.uuid) {
+      response.writeHead(400, {'Content-Type': 'text/plain'});
+      response.end('missing device uuid');
+    } else if (fields['@post_data'].length>1073741824){
+      response.writeHead(413, {'Content-Type': 'text/plain'});
+      response.end('post data too large, adjust your BLOB data size settings');
+    } else {
+      //TODO: update last seen
+      var uuid = dbconnection.escape(fields.uuid);
+      var d = new Date();
+      dbconnection.query("INSERT INTO " + table_name +
+                        "(epoch,uuid,bigData) VALUES" +
                         "(" + d.getTime() + ", "+uuid + //getTime() is in mS
                         ", " + pd + ");",function(e,r){
         response.writeHead(200, {'Content-Type': 'text/plain'});

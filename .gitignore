@@ -3,3 +3,5 @@
 node_modules
 test_files
 dbconfig.JSON
+*.jpg
+.*.swp
