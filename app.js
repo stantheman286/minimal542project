@@ -166,9 +166,9 @@ MyApp.prototype.start = function() {
     });   
 
     // Load latest image into app
-    this_app.sendEvent('retrieve',{since: 'latest', uuid:this_uuid},function(e,r){
-      this_app.picture.innerHTML = r;
-    });
+//    this_app.sendEvent('retrieve',{since: 'latest', uuid:this_uuid},function(e,r){
+//      this_app.picture.innerHTML = r;
+//    });
     
     this_app.sendEvent('retrieveBig',{since: 'latest', uuid:this_uuid},function(e,r){
       this_app.picture2.src = 'data:image/jpeg,'+r;

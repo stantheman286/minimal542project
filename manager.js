@@ -30,6 +30,7 @@ function Manager(listen_port){
   this.addEventHandler('store',this.storeData);
   this.addEventHandler('storeBig',this.storeData);
   this.addEventHandler('retrieve',this.getData);
+  this.addEventHandler('retrieveBig',this.getBigData);
   this.addEventHandler('listBig',this.getData);
   this.addEventHandler('list',this.getDevList);
   this.addEventHandler('forward',this.forward);
@@ -256,7 +257,7 @@ Manager.prototype.getBigData = function(fields,response){
     } else {
       order = " ORDER BY id ASC;";
     }
-    q = "SELECT bigData FROM " + table_name + " WHERE uuid LIKE " +
+    q = "SELECT bigdata FROM " + big_table_name + " WHERE uuid LIKE " +
             this.dbconn.escape(fields.uuid) + timeArg + order;
     
     this.dbconn.query(q, function(e,r) {
@@ -268,7 +269,7 @@ Manager.prototype.getBigData = function(fields,response){
         //for (var i = 0; i<r.length; i++){
         //  response.write( r[i].bigData );
        // }
-        response.write( r[0].bigData );
+        response.write( r[0].bigdata );
         response.end();
       }
     });
