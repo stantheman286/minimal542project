@@ -28,7 +28,9 @@ function Manager(listen_port){
   this.dbconn.connect();
   
   this.addEventHandler('store',this.storeData);
+  this.addEventHandler('storeBig',this.storeData);
   this.addEventHandler('retrieve',this.getData);
+  this.addEventHandler('listBig',this.getData);
   this.addEventHandler('list',this.getDevList);
   this.addEventHandler('forward',this.forward);
   
@@ -51,15 +53,21 @@ Manager.prototype.addDevice = function(device) {
 Manager.prototype.storeData = function(fields, response) {
   "use strict";
   //
-  // Event handler for store
+  // Event handler for store and storeBig
   // fields: the query fields and post data
   // response: the http.ServerResponse object.
   //
   var dbconnection = this.dbconn;
   this.insert_seq = (this.insert_seq + 1)%1000;
   var insert_seq = this.insert_seq;
+  var table_name;
   
-  this.checkDBTable(data_table_name,function(e){
+  if (fields.action === "storeBig") {
+    table_name = big_table_name;
+  } else {
+    table_name = data_table_name;
+  }
+  this.checkDBTable(table_name,function(e){
     var pd, d, uuid;
     if (fields['@post_data']) {
       pd = dbconnection.escape(fields['@post_data']);
@@ -79,15 +87,29 @@ Manager.prototype.storeData = function(fields, response) {
       d = new Date();
       //note: insert_seq is appended to the getTime() value to uniqueify it
       //a collision will only happen if there are >1000 inserts per milisecond.
-      dbconnection.query("INSERT INTO " + data_table_name +
-                        "(epoch,uuid,data) VALUES (" +
-                        String(d.getTime()*1000 + insert_seq) +
-                        ", " + uuid + 
-                        ", " + pd +
-                        ");",function(e,r){
-        response.writeHead(200, {'Content-Type': 'text/plain'});
-        response.end('wrote '+fields['@post_data'].length+' bytes.');
-      });
+      if (fields.action === "storeBig") {
+        dbconnection.query("INSERT INTO " + big_table_name +
+                          "(epoch,uuid,meta,bigdata) VALUES (" +
+                          String(d.getTime()*1000 + insert_seq) +
+                          ", " + uuid +
+                          ", " + dbconnection.escape(fields.meta) +
+                          ", " + (pd?pd:"null") +
+                          ");",function(e,r){
+          response.writeHead(200, {'Content-Type': 'text/plain'});
+          
+          response.end('wrote big'+fields['@post_data'].length+' bytes.');
+        });        
+      } else {
+        dbconnection.query("INSERT INTO " + data_table_name +
+                          "(epoch,uuid,data) VALUES (" +
+                          String(d.getTime()*1000 + insert_seq) +
+                          ", " + uuid + 
+                          ", " + (pd?pd:"null") +
+                          ");",function(e,r){
+          response.writeHead(200, {'Content-Type': 'text/plain'});
+          response.end('wrote '+fields['@post_data'].length+' bytes.');
+        });
+      }
     }
   });
 };
@@ -104,12 +126,12 @@ Manager.prototype.checkDBTable = function(tbl_name,callback) {
   var this_manager = this;
   var q = ''; //the query string
   if  ((tbl_name !== data_table_name) && (tbl_name !== big_table_name)) {
-    callback("ERROR: table unknown"); 
+    callback("ERROR: table unknown");
   }
   
   this.dbconn.query("SHOW TABLES LIKE '"+tbl_name+"';", function(e,r) {
     if (!e && r.length < 1 ){
-      q = 'CREATE TABLE '+data_table_name+' (' +
+      q = 'CREATE TABLE '+ tbl_name +' (' +
           'epoch BIGINT UNSIGNED NOT NULL, ' + 
           'uuid CHAR(36) NOT NULL, ' +
           ((tbl_name === data_table_name) ? ' data ' : ' meta ') +
@@ -132,7 +154,7 @@ Manager.prototype.checkDBTable = function(tbl_name,callback) {
 Manager.prototype.getData = function(fields,response){
   "use strict";
   //
-  //Event handler for ?action=retrieve.
+  //Event handler for ?action=retrieve and ?action=listBig
   // fields: the query fields
   // response: the http.ServerResponse object.
   //
@@ -146,16 +168,20 @@ Manager.prototype.getData = function(fields,response){
   } else {
     //construct the query
     if( since ){
-      timeArg = " AND epoch > " + since+" ";
+      timeArg = " AND epoch > " + (since*1000+999)+" ";
     }
     if (fields.since === "latest") {
       order = " ORDER BY epoch DESC LIMIT 1;"; //most recent
     } else {
       order = " ORDER BY epoch ASC;";
     }
-    q = "SELECT data FROM " + data_table_name + " WHERE uuid LIKE " +
+    if (fields.action === "listBig") {
+      q = "SELECT (id,meta) FROM " + big_table_name + " WHERE uuid LIKE " +
             this.dbconn.escape(fields.uuid) + timeArg + order;
-    
+    } else { // action === retrieve
+      q = "SELECT data FROM " + data_table_name + " WHERE uuid LIKE " +
+            this.dbconn.escape(fields.uuid) + timeArg + order;
+    }
     this.dbconn.query(q, function(e,r) {
       if(e) {
         response.writeHead(503, {'Content-Type': 'text/plain'});

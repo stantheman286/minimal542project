@@ -41,7 +41,7 @@ HttpEventListener.prototype.manageHTTPRequest = function(request,response) {
   //response: http response
     
   //parse request
-  var post_data = '';
+  var post_data = new Buffer('');
   var parsedURL = url.parse(request.url,true);
   var req_args = parsedURL.query;
   var eventfn = this.events[req_args[this.event_field_name]];
@@ -82,7 +82,7 @@ HttpEventListener.prototype.manageHTTPRequest = function(request,response) {
   
   if (request.method === 'POST') {
     request.on('data',function(d){
-      post_data += d;
+      post_data = Buffer.concat([post_data,d]);
     });
     request.on('end', handle_resp);
   } else {

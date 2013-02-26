@@ -166,7 +166,7 @@ Dashboard.prototype.buildAppWindow = function(window_title){
   var min_btn = document.createElement('div');
   min_btn.setAttribute("class","round_btn");
   min_btn.style.right = "20px";
-  min_btn.style.backgroundColor = "#ee0"
+  min_btn.style.backgroundColor = "#ee0";
   
   var title_txt = document.createTextNode(window_title);
   
