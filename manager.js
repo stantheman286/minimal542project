@@ -61,11 +61,14 @@ Manager.prototype.storeData = function(fields, response) {
   this.insert_seq = (this.insert_seq + 1)%1000;
   var insert_seq = this.insert_seq;
   var table_name;
+  var big = false;
   
   if (fields.action === "storeBig") {
     table_name = big_table_name;
+    big = true;
   } else {
     table_name = data_table_name;
+    big = false;
   }
   this.checkDBTable(table_name,function(e){
     var pd, d, uuid;
@@ -78,7 +81,7 @@ Manager.prototype.storeData = function(fields, response) {
     } else if (!fields.uuid) {
       response.writeHead(400, {'Content-Type': 'text/plain'});
       response.end('missing device uuid');
-    } else if (fields['@post_data'].length>1024){
+    } else if (fields['@post_data'].length>1024 && !big){
       response.writeHead(413, {'Content-Type': 'text/plain'});
       response.end('post data too large try storeBIG action');
     } else {
@@ -87,7 +90,7 @@ Manager.prototype.storeData = function(fields, response) {
       d = new Date();
       //note: insert_seq is appended to the getTime() value to uniqueify it
       //a collision will only happen if there are >1000 inserts per milisecond.
-      if (fields.action === "storeBig") {
+      if (big) {
         dbconnection.query("INSERT INTO " + big_table_name +
                           "(epoch,uuid,meta,bigdata) VALUES (" +
                           String(d.getTime()*1000 + insert_seq) +
