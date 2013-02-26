@@ -30,7 +30,7 @@ function Manager(listen_port){
   this.addEventHandler('store',this.storeData);
   this.addEventHandler('storeBig',this.storeData);
   this.addEventHandler('retrieve',this.getData);
-  this.addEventHandler('retrieveBig',this.getBigData);
+  this.addEventHandler('retrieveBig',this.retrieveBig);
   this.addEventHandler('listBig',this.getData);
   this.addEventHandler('list',this.getDevList);
   this.addEventHandler('forward',this.forward);
@@ -62,11 +62,14 @@ Manager.prototype.storeData = function(fields, response) {
   this.insert_seq = (this.insert_seq + 1)%1000;
   var insert_seq = this.insert_seq;
   var table_name;
+  var big = false;
   
   if (fields.action === "storeBig") {
     table_name = big_table_name;
+    big = true;
   } else {
     table_name = data_table_name;
+    big = false;
   }
   this.checkDBTable(table_name,function(e){
     var pd, d, uuid;
@@ -79,7 +82,7 @@ Manager.prototype.storeData = function(fields, response) {
     } else if (!fields.uuid) {
       response.writeHead(400, {'Content-Type': 'text/plain'});
       response.end('missing device uuid');
-    } else if (fields['@post_data'].length>1024){
+    } else if (fields['@post_data'].length>1024 && !big){
       response.writeHead(413, {'Content-Type': 'text/plain'});
       response.end('post data too large try storeBIG action');
     } else {
@@ -88,7 +91,7 @@ Manager.prototype.storeData = function(fields, response) {
       d = new Date();
       //note: insert_seq is appended to the getTime() value to uniqueify it
       //a collision will only happen if there are >1000 inserts per milisecond.
-      if (fields.action === "storeBig") {
+      if (big) {
         dbconnection.query("INSERT INTO " + big_table_name +
                           "(epoch,uuid,meta,bigdata) VALUES (" +
                           String(d.getTime()*1000 + insert_seq) +
@@ -198,6 +201,8 @@ Manager.prototype.getData = function(fields,response){
   var since = parseInt(fields.since,10);
   var q,order;
   var timeArg = '';
+  var big = (fields.action === "listBig");
+  var respobj = [];
   
   if (!fields.uuid) {
     response.writeHead(400, {'Content-Type': 'text/plain'});
@@ -212,68 +217,64 @@ Manager.prototype.getData = function(fields,response){
     } else {
       order = " ORDER BY epoch ASC;";
     }
-    if (fields.action === "listBig") {
-      q = "SELECT (id,meta) FROM " + big_table_name + " WHERE uuid LIKE " +
+    if (big) {
+      q = "SELECT epoch,meta FROM " + big_table_name + " WHERE uuid LIKE " +
             this.dbconn.escape(fields.uuid) + timeArg + order;
     } else { // action === retrieve
       q = "SELECT data FROM " + data_table_name + " WHERE uuid LIKE " +
             this.dbconn.escape(fields.uuid) + timeArg + order;
     }
+    console.log("query: "+q);
     this.dbconn.query(q, function(e,r) {
       if(e) {
         response.writeHead(503, {'Content-Type': 'text/plain'});
         response.end('database error: ' + e);
       } else {
         response.writeHead(200, {'Content-Type': 'text/plain'});
-        for (var i = 0; i<r.length; i++){
-          response.write(r[i].data + "\n");
+        if (!big){
+          for (var i = 0; i<r.length; i++){
+            response.write(r[i].data + "\n");
+          }
+        } else {
+          response.write(JSON.stringify(r.map(function(x){
+            var y = {};
+            y.id = x.epoch;
+            y.meta = x.meta;
+            return y;
+          })));
         }
         response.end();
       }
     });
   }
 };
-Manager.prototype.getBigData = function(fields,response){
+Manager.prototype.retrieveBig = function(fields,response) {
   "use strict";
   //
-  //Event handler for ?action=retrieveBig.
+  //Event handler for ?action=retrieveBig
   // fields: the query fields
   // response: the http.ServerResponse object.
   //
-  var since = parseInt(fields.since,10);
-  var q,order;
-  var timeArg = '';
+  var q;
+  //construct the query
   
-  if (!fields.uuid) {
-    response.writeHead(400, {'Content-Type': 'text/plain'});
-    response.end('missing device uuid');
-  } else {
-    //construct the query
-    if( since ){
-      timeArg = " AND epoch > " + since+" ";
-    }
-    if (fields.since === "latest") {
-      order = " ORDER BY id DESC LIMIT 1;"; //most recent
+  var id = parseInt(fields.id,10);
+  
+  q = "SELECT bigdata FROM " + big_table_name + " WHERE epoch = " +
+      String(id) + ";";
+  
+  console.log("query: "+q);
+  this.dbconn.query(q, function(e,r) {
+    if(e) {
+      response.writeHead(503, {'Content-Type': 'text/plain'});
+      response.end('database error: ' + e);
     } else {
-      order = " ORDER BY id ASC;";
+      response.writeHead(200);//, {'Content-Type': 'text/plain'});
+      response.end(r[0].bigdata);
     }
-    q = "SELECT bigdata FROM " + big_table_name + " WHERE uuid LIKE " +
-            this.dbconn.escape(fields.uuid) + timeArg + order;
-    
-    this.dbconn.query(q, function(e,r) {
-      if(e) {
-        response.writeHead(503, {'Content-Type': 'text/plain'});
-        response.end('database error: ' + e);
-      } else {
-        response.writeHead(200, {'Content-Type': 'image/jpeg'});
-        //for (var i = 0; i<r.length; i++){
-        //  response.write( r[i].bigData );
-       // }
-        response.write( r[0].bigdata );
-        response.end();
-      }
-    });
-  }
+  });
+  console.log("HRERE");
+  
 };
 Manager.prototype.queryDeviceInfo = function(ip,port){
   "use strict";

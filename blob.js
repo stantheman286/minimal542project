@@ -23,7 +23,7 @@ var data = fs.readFileSync('test.jpg');
 //});
 
 // Read BLOB from database and save as new image
-connection.query('SELECT bigdata FROM managerBig WHERE uuid=\'d6b57ad0-c452-55d4-b360-4fd5c3fe3107\';', function(err,r){
+connection.query('SELECT bigdata FROM managerBig WHERE epoch=\'1361859915078001\';', function(err,r){
   fs.writeFileSync('test2.jpg', r[0].bigdata, function(err) {
 //  console.log(r[0].bigData);
 //  fs.writeFileSync('test2.jpg', new Buffer( r[0].bigData ).toString('base64'), 'base64', function(err) {
