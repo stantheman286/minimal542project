@@ -12,7 +12,7 @@ var connection = mysql.createConnection({
 
 connection.connect();
 
-var data = fs.readFileSync('test.jpg');
+var data = fs.readFileSync('./images/apple.jpg');
 
 // Clean out table first
 //connection.query('DELETE FROM manager WHERE uuid=12345;');
@@ -24,7 +24,7 @@ var data = fs.readFileSync('test.jpg');
 
 // Read BLOB from database and save as new image
 connection.query('SELECT bigdata FROM managerBig WHERE epoch=\'1361859915078001\';', function(err,r){
-  fs.writeFileSync('test2.jpg', r[0].bigdata, function(err) {
+  fs.writeFileSync('test.jpg', r[0].bigdata, function(err) {
 //  console.log(r[0].bigData);
 //  fs.writeFileSync('test2.jpg', new Buffer( r[0].bigData ).toString('base64'), 'base64', function(err) {
     if (err) throw err;

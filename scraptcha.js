@@ -101,7 +101,7 @@ Device.prototype.acquire = function(fields,response) {
   this.manager_IP  = fields['@ip'] ;
   clearInterval(this.advert_timer);
 
-  this.getPicture();  //ms: test, wait until acquired
+//  this.getPicture();  //ms: test, wait until acquired
 };
 function getCodeEvent(event_data, response) {
   //gets the app code and sends it in the response body
@@ -147,14 +147,36 @@ Device.prototype.getPicture = function(fields,response) {
     res.on('data', function (chunk) {
       console.log('BODY: ' + chunk);
     });
+
+    // Wait to finish POST then complete
+    response.writeHead(res.statusCode, res.headers);
+    response.end();
+
   });
 
   req.on('error', function(e) {
     console.log('problem with request: ' + e.message);
   });
+  
+
+  // Generate a random number to pick a file
+  var rand = Math.floor((Math.random()*5)+1);
 
   // Read data from file
-  var myData = fs.readFileSync('./test.jpg');
+  var filename;
+
+  switch(rand)
+  {
+    case 1: filename = './images/apple.jpg'; break;
+    case 2: filename = './images/orange.jpg'; break;
+    case 3: filename = './images/watermelon.jpg'; break;
+    case 4: filename = './images/banana.jpg'; break;
+    case 5: filename = './images/tomato.jpg'; break;
+    default: filename = './images/apple.jpg'; break;
+  }
+
+  // Open specified file
+  var myData = fs.readFileSync(filename);
 
   // Write data to request body
   req.write(myData);

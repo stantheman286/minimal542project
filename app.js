@@ -170,10 +170,45 @@ MyApp.prototype.start = function() {
 //      this_app.picture.innerHTML = r;
 //    });
 
-    // Get the info for the latest image and then post it to the app
-    this_app.sendEvent('listBig',{since: 'latest', uuid: this_uuid}, function(e, r) {
-      var info = JSON.parse(r);
-      this_app.picture2.src = 'http://localhost:9090/?action=retrieveBig&id=' + info[0].id; // Latest only, [0] entry
+    this_app.take_picture_button.addEventListener('click',function(){
+  
+      // Tell device to take a picture
+      this_app.sendEvent('forward', {cmd:'getPicture', uuid:this_uuid}, function(e, r){
+
+        // Set epoch to past 10 minutes to reduce data intake
+        var d = new Date();
+        var since = d.getTime() - (10*60*1000);
+
+        console.log('SINCE: ' + since);
+        
+        // Get the info for the latest image and then post it to the app
+        this_app.sendEvent('listBig', {since: since, uuid: this_uuid}, function(e, r) {
+          var info = JSON.parse(r);
+
+          // Display up to the last 6 images in app
+          if (info[0]) {
+            this_app.picture.src = '/?action=retrieveBig&id=' + info[info.length-1].id;
+          }
+          if (info[1]) {
+            this_app.picture2.src = '/?action=retrieveBig&id=' + info[info.length-2].id;
+          }
+          if (info[2]) {
+            this_app.picture3.src = '/?action=retrieveBig&id=' + info[info.length-3].id;
+          }
+          if (info[3]) {
+            this_app.picture4.src = '/?action=retrieveBig&id=' + info[info.length-4].id;
+          }
+          if (info[4]) {
+            this_app.picture5.src = '/?action=retrieveBig&id=' + info[info.length-5].id;
+          }
+          if (info[5]) {
+            this_app.picture6.src = '/?action=retrieveBig&id=' + info[info.length-6].id;
+          }
+        
+        });
+      
+      });
+
     });
 
 
@@ -187,9 +222,16 @@ MyApp.prototype.update = function(){};
 MyApp.prototype.getAllElements = function(){
   this.event_field = this.getElement("event_field");
   this.query_field = this.getElement("query_field");
+  
   this.send_button = this.getElement("send_button");
+  this.take_picture_button = this.getElement("take_picture_button");
+
   this.picture = this.getElement("picture");
   this.picture2 = this.getElement("picture2");
+  this.picture3 = this.getElement("picture3");
+  this.picture4 = this.getElement("picture4");
+  this.picture5 = this.getElement("picture5");
+  this.picture6 = this.getElement("picture6");
 };
 
 /**
