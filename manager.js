@@ -34,6 +34,8 @@ function Manager(listen_port){
   this.addEventHandler('listBig',this.getData);
   this.addEventHandler('list',this.getDevList);
   this.addEventHandler('forward',this.forward);
+  this.addEventHandler('ping',this.ping);
+  this.addEventHandler('addDevice',this.remoteAddDev);
   
   this.setupMulticastListener('224.250.67.238',17768);
 }
@@ -100,8 +102,9 @@ Manager.prototype.storeData = function(fields, response) {
                           ", " + (pd?pd:"null") +
                           ");",function(e,r){
           response.writeHead(200, {'Content-Type': 'text/plain'});
-          
-          response.end('wrote big'+fields['@post_data'].length+' bytes.');
+          response.write("db response: " + r);
+          response.write("\ndb error: " + e);
+          response.end('\nwrote big'+fields['@post_data'].length+' bytes.');
         });        
       } else {
         dbconnection.query("INSERT INTO " + data_table_name +
@@ -166,7 +169,6 @@ Manager.prototype.getData = function(fields,response){
   var q,order;
   var timeArg = '';
   var big = (fields.action === "listBig");
-  var respobj = [];
   
   if (!fields.uuid) {
     response.writeHead(400, {'Content-Type': 'text/plain'});
@@ -237,7 +239,6 @@ Manager.prototype.retrieveBig = function(fields,response) {
       response.end(r[0].bigdata);
     }
   });
-  console.log("HRERE");
   
 };
 Manager.prototype.queryDeviceInfo = function(ip,port){
@@ -298,6 +299,39 @@ Manager.prototype.getDevList = function(fields,response) {
   
   response.writeHead(200, {'Content-Type': 'text/plain'});
   response.end(JSON.stringify(this.devices));
+};
+Manager.prototype.ping = function(fields,response) {
+  "use strict";
+  //
+  // Event handler for ?action=ping
+  // just returns 200ok with no body
+  // fields: the query fields 
+  // response: the http.ServerResponse object.
+  //
+  
+  response.writeHead(200, {'Content-Type': 'text/plain'});
+  response.end();
+};
+Manager.prototype.remoteAddDev = function(fields,response) {
+  "use strict";
+  //
+  // Event handler for ?action=addDevice
+  // attempts to add the device described by addr and ip.
+  // returns 200 ok with no body
+  // fields: the query fields 
+  // response: the http.ServerResponse object.
+  //
+  var port = parseInt(fields.port,10);
+  
+  if(fields.addr && port){
+    response.writeHead(200, {'Content-Type': 'text/plain'});
+    response.end();
+    this.queryDeviceInfo(fields.addr,port);
+  } else {
+    response.writeHead(503, {'Content-Type': 'text/plain'});
+    response.end('error: no addr or port');
+  }
+  
 };
 Manager.prototype.forward = function(fields,response) {
   "use strict";
