@@ -30,6 +30,7 @@ function Manager(listen_port){
   this.addEventHandler('store',this.storeData);
   this.addEventHandler('storeBig',this.storeData);
   this.addEventHandler('retrieve',this.getData);
+  this.addEventHandler('retrieveBig',this.retrieveBig);
   this.addEventHandler('listBig',this.getData);
   this.addEventHandler('list',this.getDevList);
   this.addEventHandler('forward',this.forward);
@@ -164,6 +165,8 @@ Manager.prototype.getData = function(fields,response){
   var since = parseInt(fields.since,10);
   var q,order;
   var timeArg = '';
+  var big = (fields.action === "listBig");
+  var respobj = [];
   
   if (!fields.uuid) {
     response.writeHead(400, {'Content-Type': 'text/plain'});
@@ -178,26 +181,64 @@ Manager.prototype.getData = function(fields,response){
     } else {
       order = " ORDER BY epoch ASC;";
     }
-    if (fields.action === "listBig") {
-      q = "SELECT (id,meta) FROM " + big_table_name + " WHERE uuid LIKE " +
+    if (big) {
+      q = "SELECT epoch,meta FROM " + big_table_name + " WHERE uuid LIKE " +
             this.dbconn.escape(fields.uuid) + timeArg + order;
     } else { // action === retrieve
       q = "SELECT data FROM " + data_table_name + " WHERE uuid LIKE " +
             this.dbconn.escape(fields.uuid) + timeArg + order;
     }
+    console.log("query: "+q);
     this.dbconn.query(q, function(e,r) {
       if(e) {
         response.writeHead(503, {'Content-Type': 'text/plain'});
         response.end('database error: ' + e);
       } else {
         response.writeHead(200, {'Content-Type': 'text/plain'});
-        for (var i = 0; i<r.length; i++){
-          response.write(r[i].data + "\n");
+        if (!big){
+          for (var i = 0; i<r.length; i++){
+            response.write(r[i].data + "\n");
+          }
+        } else {
+          response.write(JSON.stringify(r.map(function(x){
+            var y = {};
+            y.id = x.epoch;
+            y.meta = x.meta;
+            return y;
+          })));
         }
         response.end();
       }
     });
   }
+};
+Manager.prototype.retrieveBig = function(fields,response) {
+  "use strict";
+  //
+  //Event handler for ?action=retrieveBig
+  // fields: the query fields
+  // response: the http.ServerResponse object.
+  //
+  var q;
+  //construct the query
+  
+  var id = parseInt(fields.id,10);
+  
+  q = "SELECT bigdata FROM " + big_table_name + " WHERE epoch = " +
+      String(id) + ";";
+  
+  console.log("query: "+q);
+  this.dbconn.query(q, function(e,r) {
+    if(e) {
+      response.writeHead(503, {'Content-Type': 'text/plain'});
+      response.end('database error: ' + e);
+    } else {
+      response.writeHead(200);//, {'Content-Type': 'text/plain'});
+      response.end(r[0].bigdata);
+    }
+  });
+  console.log("HRERE");
+  
 };
 Manager.prototype.queryDeviceInfo = function(ip,port){
   "use strict";
