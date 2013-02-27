@@ -156,15 +156,8 @@ MyApp.prototype.start = function() {
   this.getUIhtml(function(e,h){
     this_app.div.innerHTML = h;
     this_app.getAllElements();
-//    this_app.send_button.addEventListener('click',function(){
-//      var q = {};
-//      q.xxxxxxx = "y&"+this_app.query_field.value; //lazy
-//      this_app.sendEvent(this_app.event_field.value,
-//                         q,function(err,resp){
-//        this_app.dash.dbg(resp);
-//      });
-//    });   
 
+    // Auto-capture
     this_app.auto_set.addEventListener('click',function(){
   
       // Obtain the auto-capture settings from app 
@@ -183,7 +176,11 @@ MyApp.prototype.start = function() {
       
       // Tell device to take a picture
       this_app.sendEvent('forward', {cmd: 'auto_capture', uuid: this_uuid, auto: auto, sample_rate: this_app.sample_rate.value}, function(e, r) {
-        this_app.update();
+        if (e) {
+          console.log('App error (Auto-capture): ' + e);
+        } else {
+          this_app.update();
+        }
       });
 
     });
@@ -193,7 +190,11 @@ MyApp.prototype.start = function() {
 
       // Tell device to take a picture
       this_app.sendEvent('forward', {cmd:'getPicture', uuid:this_uuid}, function(e, r) {
-        this_app.update();
+        if (e) {
+          console.log('App error (Take picture): ' + e);
+        } else {
+          this_app.update();
+        }
       });
 
     });
@@ -223,46 +224,48 @@ MyApp.prototype.update = function(){
 
   // Get the info for the latest image and then post it to the app
   this_app.sendEvent('listBig', {since: since, uuid: this_uuid}, function(e, r) {
-    var info = JSON.parse(r);
+    if (e) {
+      console.log('App error (Update): ' + e);
+    } else {
+      var info = JSON.parse(r);
 
-    // Display up to the last 6 images in app
-    if (info[0]) {
-      this_app.picture.src = '/?action=retrieveBig&id=' + info[info.length-1].id;
+      // Display up to the last 6 images in app
+      if (info[0]) {
+        this_app.picture.src = '/?action=retrieveBig&id=' + info[info.length-1].id; // Oldest first order, start from end
+      }
+      if (info[1]) {
+        this_app.picture2.src = '/?action=retrieveBig&id=' + info[info.length-2].id;
+      }
+      if (info[2]) {
+        this_app.picture3.src = '/?action=retrieveBig&id=' + info[info.length-3].id;
+      }
+      if (info[3]) {
+        this_app.picture4.src = '/?action=retrieveBig&id=' + info[info.length-4].id;
+      }
+      if (info[4]) {
+        this_app.picture5.src = '/?action=retrieveBig&id=' + info[info.length-5].id;
+      }
+      if (info[5]) {
+        this_app.picture6.src = '/?action=retrieveBig&id=' + info[info.length-6].id;
+      }
     }
-    if (info[1]) {
-      this_app.picture2.src = '/?action=retrieveBig&id=' + info[info.length-2].id;
-    }
-    if (info[2]) {
-      this_app.picture3.src = '/?action=retrieveBig&id=' + info[info.length-3].id;
-    }
-    if (info[3]) {
-      this_app.picture4.src = '/?action=retrieveBig&id=' + info[info.length-4].id;
-    }
-    if (info[4]) {
-      this_app.picture5.src = '/?action=retrieveBig&id=' + info[info.length-5].id;
-    }
-    if (info[5]) {
-      this_app.picture6.src = '/?action=retrieveBig&id=' + info[info.length-6].id;
-    }
-  
   });
-
 };
 
 ////////////////////////////////// Some "Private" Methods //////////////////////
 MyApp.prototype.getAllElements = function(){
-//  this.event_field = this.getElement("event_field");
-//  this.query_field = this.getElement("query_field");
   
-//  this.send_button = this.getElement("send_button");
+  // Auto-capture
   this.auto_on = this.getElement("auto_on");
   this.auto_off = this.getElement("auto_off");
   this.sample_rate = this.getElement("sample_rate");
   this.auto_set = this.getElement("auto_set");
   
+  // Take picture
   this.take_picture_button = this.getElement("take_picture_button");
   this.refresh_button = this.getElement("refresh_button");
 
+  // Picture modules
   this.picture = this.getElement("picture");
   this.picture2 = this.getElement("picture2");
   this.picture3 = this.getElement("picture3");

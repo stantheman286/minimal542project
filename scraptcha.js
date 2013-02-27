@@ -173,6 +173,7 @@ function getHTMLEvent(event_data, response) {
 
 Device.prototype.getPicture = function(fields,response) {
 
+  // Set up options for POST request
   var options = {
     hostname: this.manager_IP,
     port: this.manager_port,
@@ -180,24 +181,27 @@ Device.prototype.getPicture = function(fields,response) {
     method: 'POST'
   };
 
+  // Create request
   var req = http.request(options, function(res) {
     console.log('STATUS: ' + res.statusCode);
     console.log('HEADERS: ' + JSON.stringify(res.headers));
     res.setEncoding('utf8');
     res.on('data', function (chunk) {
-      console.log('SCRAPTCHA BODY: ' + chunk);
+      console.log('BODY: ' + chunk);
     });
 
     // If from POST request, wait to finish before completing
     if (response) {
+      // Send status and header information
       response.writeHead(res.statusCode, res.headers);
       response.end();
     }
 
   });
 
+  // Report any errors
   req.on('error', function(e) {
-    console.log('problem with request: ' + e.message);
+    console.log('Problem with request: ' + e.message);
   });
   
   var filename = 'image.jpg';
@@ -247,8 +251,8 @@ Device.prototype.auto_capture = function(fields,response) {
     }
     // Set up timer to read temperature at given sample rate
     timer = setInterval(function() {
-      
-      //this.getPicture();
+     
+      // Take a picture
       this_device.getPicture();
       
     }, (fields.sample_rate * 1000)); // Rate in ms
@@ -263,7 +267,7 @@ Device.prototype.auto_capture = function(fields,response) {
     }
 
   }
-
+  
   response.end(); 
 }
 
