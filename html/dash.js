@@ -144,7 +144,7 @@ Dashboard.prototype.loadScript = function(scriptSrc,callback) {
   if (callback) {
     oScript.onload = callback;
   }
-  oHead.appendChild(oScript);
+  oHead[0].appendChild(oScript);
 };
 
 Dashboard.prototype.buildAppWindow = function(window_title){
