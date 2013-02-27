@@ -131,6 +131,7 @@ function getHTMLEvent(event_data, response) {
     }
   });
 }
+
 Device.prototype.getPicture = function(fields,response) {
 
   var options = {
@@ -145,7 +146,7 @@ Device.prototype.getPicture = function(fields,response) {
     console.log('HEADERS: ' + JSON.stringify(res.headers));
     res.setEncoding('utf8');
     res.on('data', function (chunk) {
-      console.log('BODY: ' + chunk);
+      console.log('SCRAPTCHA BODY: ' + chunk);
     });
 
     // Wait to finish POST then complete
@@ -160,7 +161,7 @@ Device.prototype.getPicture = function(fields,response) {
   
 
   // Generate a random number to pick a file
-  var rand = Math.floor((Math.random()*5)+1);
+  var rand = Math.floor((Math.random()*8)+1);
 
   // Read data from file
   var filename;
@@ -172,6 +173,9 @@ Device.prototype.getPicture = function(fields,response) {
     case 3: filename = './images/watermelon.jpg'; break;
     case 4: filename = './images/banana.jpg'; break;
     case 5: filename = './images/tomato.jpg'; break;
+    case 6: filename = './images/strawberry.jpg'; break;
+    case 7: filename = './images/durian.jpg'; break;
+    case 8: filename = './images/rambutan.jpg'; break;
     default: filename = './images/apple.jpg'; break;
   }
 
@@ -184,10 +188,41 @@ Device.prototype.getPicture = function(fields,response) {
 
 }
 
+// Setup auto-capture settings
+Device.prototype.auto_capture = function(fields,response) {
+    
+    // Turn on the temperature sensor
+//TODO    if (fields.auto_set ==) {
+//TODO
+//TODO      // Clear any existing timers
+//TODO      if(typeof(timer) !== 'undefined') {
+//TODO        clearInterval(timer);
+//TODO      }
+//TODO      // Set up timer to read temperature at given sample rate
+//TODO      timer = setInterval(function() {
+//TODO        
+//TODO        // TODO: getPicture()
+//TODO        
+//TODO      }, (result['sample_rate'] * 1000)); // Rate in ms
+//TODO
+//TODO    }
+//TODO    // Turn off the temperature sensor
+//TODO    else if (result['temp_set'] == 'off') {
+//TODO
+//TODO      // Clear any existing timers
+//TODO      if(typeof(timer) !== 'undefined') {
+//TODO        clearInterval(timer);
+//TODO      }
+//TODO
+//TODO    }
+//TODO
+//TODO    res.end(); 
+}
+
 ///////////////////////////////////// MAIN ////////////////////////////////////
 //if i'm being called from command line
 if(require.main === module) {
-  var d1 = new Device(1337);
+  var d1 = new Device(1234);
 
 //  setTimeout(function(){
 //    var d2 = new Device(8081);

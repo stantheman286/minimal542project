@@ -149,82 +149,88 @@ MyApp.prototype.start = function() {
   //
 
   //set some attributes for the app div
-  this.div.style.backgroundColor = "#99CCCC";
+  this.div.style.backgroundColor = "#336699";
   
   var this_app = this;
   var this_uuid = this.myuuid;
   this.getUIhtml(function(e,h){
     this_app.div.innerHTML = h;
     this_app.getAllElements();
-    this_app.send_button.addEventListener('click',function(){
-      var q = {};
-      q.xxxxxxx = "y&"+this_app.query_field.value; //lazy
-      this_app.sendEvent(this_app.event_field.value,
-                         q,function(err,resp){
-        this_app.dash.dbg(resp);
-      });
-    });   
+//    this_app.send_button.addEventListener('click',function(){
+//      var q = {};
+//      q.xxxxxxx = "y&"+this_app.query_field.value; //lazy
+//      this_app.sendEvent(this_app.event_field.value,
+//                         q,function(err,resp){
+//        this_app.dash.dbg(resp);
+//      });
+//    });   
 
-    // Load latest image into app
-//    this_app.sendEvent('retrieve',{since: 'latest', uuid:this_uuid},function(e,r){
-//      this_app.picture.innerHTML = r;
-//    });
-
+    // Take a picture and update when 'Take Picture' clicked
     this_app.take_picture_button.addEventListener('click',function(){
-  
+
       // Tell device to take a picture
-      this_app.sendEvent('forward', {cmd:'getPicture', uuid:this_uuid}, function(e, r){
-
-        // Set epoch to past 10 minutes to reduce data intake
-        var d = new Date();
-        var since = d.getTime() - (10*60*1000);
-
-        console.log('SINCE: ' + since);
-        
-        // Get the info for the latest image and then post it to the app
-        this_app.sendEvent('listBig', {since: since, uuid: this_uuid}, function(e, r) {
-          var info = JSON.parse(r);
-
-          // Display up to the last 6 images in app
-          if (info[0]) {
-            this_app.picture.src = '/?action=retrieveBig&id=' + info[info.length-1].id;
-          }
-          if (info[1]) {
-            this_app.picture2.src = '/?action=retrieveBig&id=' + info[info.length-2].id;
-          }
-          if (info[2]) {
-            this_app.picture3.src = '/?action=retrieveBig&id=' + info[info.length-3].id;
-          }
-          if (info[3]) {
-            this_app.picture4.src = '/?action=retrieveBig&id=' + info[info.length-4].id;
-          }
-          if (info[4]) {
-            this_app.picture5.src = '/?action=retrieveBig&id=' + info[info.length-5].id;
-          }
-          if (info[5]) {
-            this_app.picture6.src = '/?action=retrieveBig&id=' + info[info.length-6].id;
-          }
-        
-        });
-      
+      this_app.sendEvent('forward', {cmd:'getPicture', uuid:this_uuid}, function(e, r) {
+        this_app.update();
       });
 
     });
 
+    // Update when 'Refresh' clicked
+    this_app.refresh_button.addEventListener('click', this_app.update());
 
   });
 
 };
-// This app has nothing to do on update
-MyApp.prototype.update = function(){};
+
+MyApp.prototype.update = function(){
+
+  var this_app = this;
+  var this_uuid = this.myuuid;
+  
+  // Set epoch to past 10 minutes to reduce data intake
+  var d = new Date();
+  var since = d.getTime() - (10*60*1000);
+
+  // Get the info for the latest image and then post it to the app
+  this_app.sendEvent('listBig', {since: since, uuid: this_uuid}, function(e, r) {
+    var info = JSON.parse(r);
+
+    // Display up to the last 6 images in app
+    if (info[0]) {
+      this_app.picture.src = '/?action=retrieveBig&id=' + info[info.length-1].id;
+    }
+    if (info[1]) {
+      this_app.picture2.src = '/?action=retrieveBig&id=' + info[info.length-2].id;
+    }
+    if (info[2]) {
+      this_app.picture3.src = '/?action=retrieveBig&id=' + info[info.length-3].id;
+    }
+    if (info[3]) {
+      this_app.picture4.src = '/?action=retrieveBig&id=' + info[info.length-4].id;
+    }
+    if (info[4]) {
+      this_app.picture5.src = '/?action=retrieveBig&id=' + info[info.length-5].id;
+    }
+    if (info[5]) {
+      this_app.picture6.src = '/?action=retrieveBig&id=' + info[info.length-6].id;
+    }
+  
+  });
+
+};
 
 ////////////////////////////////// Some "Private" Methods //////////////////////
 MyApp.prototype.getAllElements = function(){
-  this.event_field = this.getElement("event_field");
-  this.query_field = this.getElement("query_field");
+//  this.event_field = this.getElement("event_field");
+//  this.query_field = this.getElement("query_field");
   
-  this.send_button = this.getElement("send_button");
+//  this.send_button = this.getElement("send_button");
+  this.auto_on = this.getElement("auto_on");
+  this.auto_off = this.getElement("auto_off");
+  this.auto_set = this.getElement("auto_set");
+  
   this.take_picture_button = this.getElement("take_picture_button");
+  this.refresh_button = this.getElement("refresh_button");
 
   this.picture = this.getElement("picture");
   this.picture2 = this.getElement("picture2");
