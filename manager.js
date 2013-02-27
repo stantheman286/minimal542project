@@ -41,6 +41,7 @@ function Manager(listen_port){
   
   this.loadDevicelistDB();
   this.setupMulticastListener('224.250.67.238',17768);
+  //TODO: periodically check for dead devices
 }
 Manager.prototype = Object.create(HEL.prototype);
 Manager.prototype.constructor = Manager;  
@@ -351,6 +352,7 @@ Manager.prototype.remoteAddDev = function(fields,response) {
 };
 Manager.prototype.forward = function(fields,response) {
   "use strict";
+  var this_manager = this;
   if (!fields.uuid) {  
     response.writeHead(400, {'Content-Type': 'text/plain'});
     response.end('missing device uuid');
@@ -386,6 +388,7 @@ Manager.prototype.forward = function(fields,response) {
     });
     fwd_req.on("error",function(e){
       dbg("device unreachable: "+e,1);
+      this_manager.forgetDevice(fields.uuid);
     });
     
     if(fields['@post_data']) {
@@ -446,7 +449,6 @@ Manager.prototype.updateDevlistDB = function(){
     }
   });
   
-  
   function checkdevDBTable(cb) {
     //if the table does not exist create it
     this_manager.dbconn.query("SHOW TABLES LIKE '"+ devices_table_name + "' ;",
@@ -474,6 +476,7 @@ Manager.prototype.updateDevlistDB = function(){
   }
 };
 Manager.prototype.loadDevicelistDB = function(){
+  "use strict";
   var this_manager = this;
   this.dbconn.query("SELECT * FROM " + devices_table_name + ";", function(e,r){
     if(e) {
@@ -487,6 +490,15 @@ Manager.prototype.loadDevicelistDB = function(){
     }
   });
 }
+Manager.prototype.forgetDevice = function(uuid){
+  delete this.devices[uuid];
+  var q = "DELETE FROM " + devices_table_name + " WHERE uuid LIKE '" +
+          uuid + "';"
+  this.dbconn.query(q, function(e,r){
+    dbg('deleted device.',5);
+    dbg('query:'+q,10);
+  });
+};
 //console debug code:
 function dbg(message, level){
   //
