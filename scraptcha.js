@@ -8,6 +8,44 @@ var HEL  = require('./httpEventListener.js').HttpEventListener;
 var OS   = require('os');
 var crypto = require('crypto');
 var dgram = require('dgram');
+var scraptcha = require('../c/build/Release/myScraptcha');
+
+// Constants
+var LOW = 0;
+var HIGH = 1;
+
+var LSBFIRST = 0;
+var MSBFIRST = 1;
+
+var GPIO_OUTPUT = 0;
+var GPIO_INPUT = 1;
+
+var ANODE0 = 25;
+var ANODE1 = 24;
+var ANODE2 = 23;
+
+var CLOCK_PIN = 22
+var LATCH_PIN = 21
+var DATA_PIN = 17
+
+var LED0_RED = 0xFE;
+var LED0_GRN = 0xFD;
+var LED1_RED = 0xFB;
+var LED1_GRN = 0xF7;
+var LED2_RED = 0xEF;
+var LED2_GRN = 0xDF;
+var LED3_RED = 0xBF;
+var LED3_GRN = 0x7F;
+
+var RED = 0;
+var GREEN = 1;
+
+var TRASH = 0;
+var RECYCLING = 1;
+var COMPOST = 2;
+
+var CAPTURE = 0;
+var LIVE = 1;
 
 //some parameters.  they should go in a config file later:
 var app_code_path  = 'app.js';
@@ -162,26 +200,28 @@ Device.prototype.getPicture = function(fields,response) {
     console.log('problem with request: ' + e.message);
   });
   
+  var filename = 'image.jpg';
 
-  // Generate a random number to pick a file
-  var rand = Math.floor((Math.random()*8)+1);
+//ms: testing  // Generate a random number to pick a file
+//ms: testing  var rand = Math.floor((Math.random()*8)+1);
+//ms: testing
+//ms: testing  // Read data from file
+//ms: testing  var filename;
+//ms: testing
+//ms: testing  switch(rand)
+//ms: testing  {
+//ms: testing    case 1: filename = './images/apple.jpg'; break;
+//ms: testing    case 2: filename = './images/orange.jpg'; break;
+//ms: testing    case 3: filename = './images/watermelon.jpg'; break;
+//ms: testing    case 4: filename = './images/banana.jpg'; break;
+//ms: testing    case 5: filename = './images/tomato.jpg'; break;
+//ms: testing    case 6: filename = './images/strawberry.jpg'; break;
+//ms: testing    case 7: filename = './images/durian.jpg'; break;
+//ms: testing    case 8: filename = './images/rambutan.jpg'; break;
+//ms: testing    default: filename = './images/apple.jpg'; break;
+//ms: testing  }
 
-  // Read data from file
-  var filename;
-
-  switch(rand)
-  {
-    case 1: filename = './images/apple.jpg'; break;
-    case 2: filename = './images/orange.jpg'; break;
-    case 3: filename = './images/watermelon.jpg'; break;
-    case 4: filename = './images/banana.jpg'; break;
-    case 5: filename = './images/tomato.jpg'; break;
-    case 6: filename = './images/strawberry.jpg'; break;
-    case 7: filename = './images/durian.jpg'; break;
-    case 8: filename = './images/rambutan.jpg'; break;
-    default: filename = './images/apple.jpg'; break;
-  }
-
+  scraptcha.takePicture(filename, CAPTURE);
   console.log('Snapping picture...');
 
   // Open specified file
