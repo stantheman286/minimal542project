@@ -10,8 +10,10 @@ var dgram = require('dgram');
 //parameters
 var data_table_name = 'manager';
 var big_table_name = 'managerBig';
+var devices_table_name = "devices";
 var dash_HTML  = './dash.html';
 var keystr = "obqQm3gtDFZdaYlENpIYiKzl+/qARDQRmiWbYhDW9wreM/APut73nnxCBJ8a7PwW";
+var __DEBUG_LEVEL__ = 15;
 
 ///////////////////////////////////// MANAGER //////////////////////////////////
 function Manager(listen_port){
@@ -37,6 +39,7 @@ function Manager(listen_port){
   this.addEventHandler('ping',this.ping);
   this.addEventHandler('addDevice',this.remoteAddDev);
   
+  this.loadDevicelistDB();
   this.setupMulticastListener('224.250.67.238',17768);
 }
 Manager.prototype = Object.create(HEL.prototype);
@@ -52,6 +55,7 @@ Manager.prototype.addDevice = function(device) {
   console.log("adding dev:");
   console.dir(device);
   this.devices[device.uuid.toLowerCase()] = device;
+  this.updateDevlistDB();
 };
 Manager.prototype.storeData = function(fields, response) {
   "use strict";
@@ -257,7 +261,7 @@ Manager.prototype.queryDeviceInfo = function(ip,port){
   };
   //TODO: this can trigger an exception if the device is gone
   //TODO: hande the exception
-  http.request(options, function(res){
+  var inforeq = http.request(options, function(res){
     var resp = '';
     var dev_info = null;
     if (res.statusCode == 200) {
@@ -273,7 +277,13 @@ Manager.prototype.queryDeviceInfo = function(ip,port){
         this_manager.addDevice(dev_info );
       });
     }
-  }).end();
+  });
+  inforeq.on("error",function(e){
+    //something wen't wrong, likely device unreachable
+    dbg("cannot add client. " +e,5);
+  });
+  inforeq.end();
+  
   
   options = {
     host   : ip,
@@ -281,13 +291,19 @@ Manager.prototype.queryDeviceInfo = function(ip,port){
     path   : '/?cmd=acquire&port=' + this.port,
     method : 'GET',
   };
-  http.request(options,function(res){
+  var acqreq = http.request(options,function(res){
     if(res.statusCode==200) {
       //good do nothing.
     } else {
       //TODO: decide what to do with the error.
     }
-  }).end();
+  });
+  acqreq.on("error",function(e){
+    //something wen't wrong, likely device unreachable
+    dbg("cannot acquire client. " +e,5);
+  });
+  acqreq.end();
+  
 };
 Manager.prototype.getDevList = function(fields,response) {
   "use strict";
@@ -360,13 +376,16 @@ Manager.prototype.forward = function(fields,response) {
           app_code += chunk;
         });
         res.on('end',function(){
-          response.writeHead(200, {'Content-Type': res.headers['content-type']});
+          response.writeHead(200,{'Content-Type': res.headers['content-type']});
           response.end(app_code);
         });
       } else {
         response.writeHead(503, {'Content-Type': 'text/plain'});
         response.end("device error");
       }
+    });
+    fwd_req.on("error",function(e){
+      dbg("device unreachable: "+e,1);
     });
     
     if(fields['@post_data']) {
@@ -397,6 +416,103 @@ Manager.prototype.setupMulticastListener = function(mcastAddr,port){
   udpsock.bind(port);
   udpsock.addMembership(mcastAddr);
 };
+Manager.prototype.updateDevlistDB = function(){
+  "use_strict";
+  var q;
+  var this_manager = this;
+  var temp;
+  
+  checkdevDBTable(function(e){
+    if(!e) {
+      //insert/update the device list
+      for(var uuid in this_manager.devices) {
+        temp = this_manager.devices[uuid];
+        q = "REPLACE INTO " + devices_table_name + " VALUES (" +
+            "'" + temp.uuid +"', " +
+            "'" + temp.status +"', " +
+            "'" + temp.state +"', " +
+            "'" + temp.name +"', " +
+            "'" + temp.ip +"', " +
+            temp.port +", " +
+            temp.last_seen +
+             ");";
+        this_manager.dbconn.query(q,function(e,r){
+          if (e) {
+            dbg("db error 3 - "+e,1);
+            dbg("query was:" + q, 10);
+          }
+        });
+      }
+    }
+  });
+  
+  
+  function checkdevDBTable(cb) {
+    //if the table does not exist create it
+    this_manager.dbconn.query("SHOW TABLES LIKE '"+ devices_table_name + "' ;",
+                      function(e,r){
+      if(!e && r.length<1 ) {
+        dbg('creating device table',10);
+        q = 'CREATE TABLE ' + devices_table_name + ' (' +
+            'uuid CHAR(36) NOT NULL, ' +
+            'status CHAR(50), ' +
+            'state VARCHAR(1024), ' +
+            'name VARCHAR(50), ' +
+            'ip VARCHAR(253), ' +
+            'port INT UNSIGNED, ' +
+            'last_seen DOUBLE, ' +
+            'PRIMARY KEY (uuid) ' +
+            ');';
+          this_manager.dbconn.query(q, function(err,resp){
+            cb(e);
+          });
+      } else if(e){
+        dbg('db error 1- updateDevlistDB:' + e,1);
+      } 
+      cb(e);
+    });
+  }
+};
+Manager.prototype.loadDevicelistDB = function(){
+  var this_manager = this;
+  this.dbconn.query("SELECT * FROM " + devices_table_name + ";", function(e,r){
+    if(e) {
+      dbg('db error loadDevicelistDB: '+e,1);
+    } else {
+      //this_manager.devices = {};
+      dbg("loading device list from DB...", 10);
+      for (var i = 0; i<r.length; i++){
+        this_manager.devices[r[i].uuid] = r[i];
+      }
+    }
+  });
+}
+//console debug code:
+function dbg(message, level){
+  //
+  // prints debug message to console.
+  // message: a string with debug message
+  // level: the level
+  //        1) errors only
+  //        5) warnings
+  //        10) debug
+  //
+  var lvlmsg = "debug ";
+  if(!level){
+    level = 10;
+  }
+  if (level<=5) {
+    lvlmsg = "warning ";
+  }
+  if (level<=1) {
+    lvlmsg = "error ";
+  }
+  if (__DEBUG_LEVEL__>= level) {
+    
+    console.log(lvlmsg + ": " + message);
+  }
+}
+
 //////////////////////////////STARTUP CODE/////////////////////////////////////
 //if i'm being called from command line
 if(require.main === module) {
