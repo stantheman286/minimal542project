@@ -39,6 +39,7 @@ function Device(listen_port) {
   this.state  = "none"; //no other state for such a simple device
 
   //add apps events here
+  this.addEventHandler('auto_capture',this.auto_capture); 
   this.addEventHandler('getPicture',this.getPicture); 
   this.addEventHandler('getCode',getCodeEvent); 
   this.addEventHandler('getHTML',getHTMLEvent); 
@@ -149,9 +150,11 @@ Device.prototype.getPicture = function(fields,response) {
       console.log('SCRAPTCHA BODY: ' + chunk);
     });
 
-    // Wait to finish POST then complete
-    response.writeHead(res.statusCode, res.headers);
-    response.end();
+    // If from POST request, wait to finish before completing
+    if (response) {
+      response.writeHead(res.statusCode, res.headers);
+      response.end();
+    }
 
   });
 
@@ -179,6 +182,8 @@ Device.prototype.getPicture = function(fields,response) {
     default: filename = './images/apple.jpg'; break;
   }
 
+  console.log('Snapping picture...');
+
   // Open specified file
   var myData = fs.readFileSync(filename);
 
@@ -190,33 +195,36 @@ Device.prototype.getPicture = function(fields,response) {
 
 // Setup auto-capture settings
 Device.prototype.auto_capture = function(fields,response) {
-    
-    // Turn on the temperature sensor
-//TODO    if (fields.auto_set ==) {
-//TODO
-//TODO      // Clear any existing timers
-//TODO      if(typeof(timer) !== 'undefined') {
-//TODO        clearInterval(timer);
-//TODO      }
-//TODO      // Set up timer to read temperature at given sample rate
-//TODO      timer = setInterval(function() {
-//TODO        
-//TODO        // TODO: getPicture()
-//TODO        
-//TODO      }, (result['sample_rate'] * 1000)); // Rate in ms
-//TODO
-//TODO    }
-//TODO    // Turn off the temperature sensor
-//TODO    else if (result['temp_set'] == 'off') {
-//TODO
-//TODO      // Clear any existing timers
-//TODO      if(typeof(timer) !== 'undefined') {
-//TODO        clearInterval(timer);
-//TODO      }
-//TODO
-//TODO    }
-//TODO
-//TODO    res.end(); 
+  
+  var this_device = this;
+
+  // Turn on auto-capture 
+  if (fields.auto === 'on') {
+
+    // Clear any existing timers
+    if(typeof(timer) !== 'undefined') {
+      clearInterval(timer);
+    }
+    // Set up timer to read temperature at given sample rate
+    timer = setInterval(function() {
+      
+      //this.getPicture();
+      this_device.getPicture();
+      
+    }, (fields.sample_rate * 1000)); // Rate in ms
+
+  }
+  // Turn off auto-capture
+  else {
+
+    // Clear any existing timers
+    if(typeof(timer) !== 'undefined') {
+      clearInterval(timer);
+    }
+
+  }
+
+  response.end(); 
 }
 
 ///////////////////////////////////// MAIN ////////////////////////////////////
