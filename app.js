@@ -257,24 +257,19 @@ MyApp.prototype.update = function(){
       var info = JSON.parse(r);
 
       // Display up to the last 6 images in app
-      if (info[0]) {
-        this_app.picture.src = '/?action=retrieveBig&id=' + info[info.length-1].id; // Oldest first order, start from end
+      for(var i = 0; i < 6; i++) {
+        if (info[i]) {
+          this_app.picture[i].src = '/?action=retrieveBig&id=' + info[info.length-(i+1)].id; // Oldest first order, start from end
+        }
       }
-      if (info[1]) {
-        this_app.picture2.src = '/?action=retrieveBig&id=' + info[info.length-2].id;
-      }
-      if (info[2]) {
-        this_app.picture3.src = '/?action=retrieveBig&id=' + info[info.length-3].id;
-      }
-      if (info[3]) {
-        this_app.picture4.src = '/?action=retrieveBig&id=' + info[info.length-4].id;
-      }
-      if (info[4]) {
-        this_app.picture5.src = '/?action=retrieveBig&id=' + info[info.length-5].id;
-      }
-      if (info[5]) {
-        this_app.picture6.src = '/?action=retrieveBig&id=' + info[info.length-6].id;
-      }
+
+      //ms: testing
+      if (info[0]) console.log((JSON.parse(info[info.length-1].meta)).guess);
+      if (info[1]) console.log((JSON.parse(info[info.length-2].meta)).guess);
+      if (info[2]) console.log((JSON.parse(info[info.length-3].meta)).guess);
+      if (info[3]) console.log((JSON.parse(info[info.length-4].meta)).guess);
+      if (info[4]) console.log((JSON.parse(info[info.length-5].meta)).guess);
+      if (info[5]) console.log((JSON.parse(info[info.length-6].meta)).guess);
     }
   });
 };
@@ -298,12 +293,10 @@ MyApp.prototype.getAllElements = function(){
   this.refresh_button = this.getElement("refresh_button");
 
   // Picture modules
-  this.picture = this.getElement("picture");
-  this.picture2 = this.getElement("picture2");
-  this.picture3 = this.getElement("picture3");
-  this.picture4 = this.getElement("picture4");
-  this.picture5 = this.getElement("picture5");
-  this.picture6 = this.getElement("picture6");
+  this.picture = new Array();
+  for (var i = 0; i < 6; i++) {
+    this.picture[i] = this.getElement("picture" + i);
+  }
 };
 
 //spec says app needs to be named App

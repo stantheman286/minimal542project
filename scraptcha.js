@@ -174,39 +174,13 @@ function getHTMLEvent(event_data, response) {
 Device.prototype.getPicture = function(fields,response) {
   "use strict";
 
-  // Set up options for POST request
-  var options = {
-    hostname: this.manager_IP,
-    port: this.manager_port,
-    path: '/?action=storeBig&uuid=' + this.uuid,
-    method: 'POST'
-  };
-
-  // Create request
-  var req = http.request(options, function(res) {
-    console.log('STATUS: ' + res.statusCode);
-    console.log('HEADERS: ' + JSON.stringify(res.headers));
-    res.setEncoding('utf8');
-    res.on('data', function (chunk) {
-      console.log('BODY: ' + chunk);
-    });
-
-    // If from POST request, wait to finish before completing
-    if (response) {
-      // Send status and header information
-      response.writeHead(res.statusCode, res.headers);
-      response.end();
-    }
-
-  });
-
-  // Report any errors
-  req.on('error', function(e) {
-    console.log('Problem with request: ' + e.message);
-  });
-  
-  // Read data from file
-  var filename = 'image.jpg';
+  // Declare variables
+  var myData;
+  var filename  = 'image.jpg';
+  var guess     = 'TRASH';
+  var meta;
+  var options;
+  var req;
 
   // Generate a random number to pick a file and guess
   var rand1 = Math.floor((Math.random()*8)+1);
@@ -228,9 +202,56 @@ Device.prototype.getPicture = function(fields,response) {
 //ms: testing  scraptcha.takePicture(filename, CAPTURE);
   console.log('Snapping picture...');
 
-  // Open specified file
-  var myData = fs.readFileSync(filename);
+  switch(rand2)
+  {
+    case 0: guess = 'TRASH'; break;
+    case 1: guess = 'RECYCLING'; break;
+    case 2: guess = 'COMPOST'; break;
+    default: guess = 'TRASH'; break;
+  }
 
+  console.log('Making guess...');
+
+  // Create meta information
+  meta = JSON.stringify({
+    guess: guess
+  });
+  console.log('GUESS: ' + guess);
+
+  // Open specified file
+  myData = fs.readFileSync(filename);
+
+  // Set up options for POST request
+  options = {
+    hostname: this.manager_IP,
+    port: this.manager_port,
+    path: '/?action=storeBig&uuid=' + this.uuid + '&meta=' + meta,
+    method: 'POST'
+  };
+
+  // Create request
+  req = http.request(options, function(res) {
+    console.log('STATUS: ' + res.statusCode);
+    console.log('HEADERS: ' + JSON.stringify(res.headers));
+    res.setEncoding('utf8');
+    res.on('data', function (chunk) {
+      console.log('BODY: ' + chunk);
+    });
+
+    // If from POST request, wait to finish before completing
+    if (response) {
+      // Send status and header information
+      response.writeHead(res.statusCode, res.headers);
+      response.end();
+    }
+
+  });
+
+  // Report any errors
+  req.on('error', function(e) {
+    console.log('Problem with request: ' + e.message);
+  });
+  
   // Write data to request body
   req.write(myData);
   req.end();
