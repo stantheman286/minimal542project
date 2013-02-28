@@ -144,6 +144,7 @@ MyApp.prototype = Object.create(AbstractApp.prototype);
 
 //overwrite start and update
 MyApp.prototype.start = function() {
+  "use strict";
   //
   //Starts app and loads gui.
   //
@@ -154,8 +155,10 @@ MyApp.prototype.start = function() {
   // Define variables
   var this_app = this;
   var this_uuid = this.myuuid;
+  var timer = undefined;
   var auto;
   var sample_rate;
+  var refresh_rate;
 
   this.getUIhtml(function(e,h){
     this_app.div.innerHTML = h;
@@ -208,16 +211,36 @@ MyApp.prototype.start = function() {
       this_app.update();
     });
 
-    // Auto-refresh app every 1 second
-    setInterval(function(){
+    // Auto-refresh app every 10 seconds
+    timer = setInterval(function(){
       this_app.update();
-    },1000);
+    },10000);
+
+     // Change interval when 'Set' clicked
+    this_app.refresh_set_button.addEventListener('click', function() {
+    
+      if(typeof(timer) !== 'undefined') {
+        clearInterval(timer);
+      }
+      
+      refresh_rate = this_app.refresh_rate.value;
+
+      // Set default rate if out of range 
+      if (refresh_rate < '1' || refresh_rate > '10') {
+        refresh_rate = '1';
+      }
+
+      timer = setInterval(function(){
+        this_app.update();
+      }, refresh_rate*1000);  // ms
+    });
 
   });
 
 };
 
 MyApp.prototype.update = function(){
+  "use strict";
 
   var this_app = this;
   var this_uuid = this.myuuid;
@@ -258,12 +281,17 @@ MyApp.prototype.update = function(){
 
 ////////////////////////////////// Some "Private" Methods //////////////////////
 MyApp.prototype.getAllElements = function(){
+  "use strict";
   
   // Auto-capture
   this.auto_on = this.getElement("auto_on");
   this.auto_off = this.getElement("auto_off");
   this.sample_rate = this.getElement("sample_rate");
   this.auto_set = this.getElement("auto_set");
+
+  // Auto-refresh
+  this.refresh_rate = this.getElement("refresh_rate");
+  this.refresh_set_button = this.getElement("refresh_set_button");
   
   // Take picture
   this.take_picture_button = this.getElement("take_picture_button");

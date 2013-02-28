@@ -172,6 +172,7 @@ function getHTMLEvent(event_data, response) {
 }
 
 Device.prototype.getPicture = function(fields,response) {
+  "use strict";
 
   // Set up options for POST request
   var options = {
@@ -238,8 +239,10 @@ Device.prototype.getPicture = function(fields,response) {
 
 // Setup auto-capture settings
 Device.prototype.auto_capture = function(fields,response) {
+  "use strict";
   
   var this_device = this;
+  var timer = undefined;
 
   // Turn on auto-capture 
   if (fields.auto === 'on') {
