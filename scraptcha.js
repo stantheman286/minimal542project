@@ -24,9 +24,9 @@ var ANODE0 = 25;
 var ANODE1 = 24;
 var ANODE2 = 23;
 
-var CLOCK_PIN = 22
-var LATCH_PIN = 21
-var DATA_PIN = 17
+var CLOCK_PIN = 22;
+var LATCH_PIN = 21;
+var DATA_PIN = 17;
 
 var LED0_RED = 0xFE;
 var LED0_GRN = 0xFD;
@@ -123,7 +123,7 @@ Device.prototype.info = function(fields,response) {
     uuid   : this.uuid,
     status : this.status,
     state  : this.state,
-    name   : name,
+    name   : name
     }));
   console.log('info req');
   
@@ -204,28 +204,27 @@ Device.prototype.getPicture = function(fields,response) {
     console.log('Problem with request: ' + e.message);
   });
   
+  // Read data from file
   var filename = 'image.jpg';
 
-//ms: testing  // Generate a random number to pick a file
-//ms: testing  var rand = Math.floor((Math.random()*8)+1);
-//ms: testing
-//ms: testing  // Read data from file
-//ms: testing  var filename;
-//ms: testing
-//ms: testing  switch(rand)
-//ms: testing  {
-//ms: testing    case 1: filename = './images/apple.jpg'; break;
-//ms: testing    case 2: filename = './images/orange.jpg'; break;
-//ms: testing    case 3: filename = './images/watermelon.jpg'; break;
-//ms: testing    case 4: filename = './images/banana.jpg'; break;
-//ms: testing    case 5: filename = './images/tomato.jpg'; break;
-//ms: testing    case 6: filename = './images/strawberry.jpg'; break;
-//ms: testing    case 7: filename = './images/durian.jpg'; break;
-//ms: testing    case 8: filename = './images/rambutan.jpg'; break;
-//ms: testing    default: filename = './images/apple.jpg'; break;
-//ms: testing  }
+  // Generate a random number to pick a file and guess
+  var rand1 = Math.floor((Math.random()*8)+1);
+  var rand2 = Math.floor((Math.random()*3));
 
-  scraptcha.takePicture(filename, CAPTURE);
+  switch(rand1)
+  {
+    case 1: filename = './images/apple.jpg'; break;
+    case 2: filename = './images/orange.jpg'; break;
+    case 3: filename = './images/watermelon.jpg'; break;
+    case 4: filename = './images/banana.jpg'; break;
+    case 5: filename = './images/tomato.jpg'; break;
+    case 6: filename = './images/strawberry.jpg'; break;
+    case 7: filename = './images/durian.jpg'; break;
+    case 8: filename = './images/rambutan.jpg'; break;
+    default: filename = './images/apple.jpg'; break;
+  }
+
+//ms: testing  scraptcha.takePicture(filename, CAPTURE);
   console.log('Snapping picture...');
 
   // Open specified file
@@ -235,7 +234,7 @@ Device.prototype.getPicture = function(fields,response) {
   req.write(myData);
   req.end();
 
-}
+};
 
 // Setup auto-capture settings
 Device.prototype.auto_capture = function(fields,response) {
@@ -269,7 +268,7 @@ Device.prototype.auto_capture = function(fields,response) {
   }
   
   response.end(); 
-}
+};
 
 ///////////////////////////////////// MAIN ////////////////////////////////////
 //if i'm being called from command line
