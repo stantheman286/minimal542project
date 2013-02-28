@@ -49,7 +49,7 @@ AbstractApp.prototype.stop = function() {
   //nothing to be done for Abstract app.
   clearInterval(this.update_interval_id);
 };
-AbstractApp.prototype.setInterval = function(interval){
+AbstractApp.prototype.setUpdateInterval = function(interval){
   "use strict";
   //
   // Sets the update intervnal in ms for the app.
