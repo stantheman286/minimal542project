@@ -1,3 +1,52 @@
-<div> Event type<input id="event_field"></div>
-<div> Query string /?<input id="query_field"</div>
-<button id="send_button">send</button>
+<div id="containter" style="text-align:center;width:100%">
+<div id="overall_align" style="margin: 0px auto;width:95%">
+<br />
+<div id="auto_capture_container" style="text-align:center;background-color:#333333;font-family:verdana;font-size:11px;color:#FFFFFF">
+Auto Capture: 
+<input type="radio" name="temp" id="auto_on">On&nbsp;
+<input type="radio" name="temp" id="auto_off" checked>Off&nbsp;
+<br />
+ Sample rate (every 'n' sec): 
+<input type="text" id="sample_rate" size="3" maxlength="1" value="1" />
+<button id="auto_set" style="background-color:#666699;font-family:verdana;font-size:10px;color:#FFFFFF;font-weight:bold">Set</button>
+</div>
+<div id="auto_refresh_container" style="text-align:center;background-color:#333333;font-family:verdana;font-size:11px;color:#FFFFFF">
+ Refresh Rate (every 'n' sec): 
+<input type="text" id="refresh_rate" size="3" maxlength="2" value="1" />
+<button id="refresh_set_button" style="background-color:#666699;font-family:verdana;font-size:10px;color:#FFFFFF;font-weight:bold">Set</button>
+</div>
+<br />
+<div id="picture_guess_container" style="text-align:center;background-color:#333333">
+<button id="take_picture_button" style="background-color:#666699;font-family:verdana;font-size:10px;color:#FFFFFF;font-weight:bold">Take Picture</button>&nbsp;
+<button id="refresh_button" style="background-color:#666699;font-family:verdana;font-size:10px;color:#FFFFFF;font-weight:bold">Refresh</button>
+<br />
+<br />
+<table style="padding:2px;spacing:5px">
+<tr>
+<td style="text-align:center;width:50%"><img id="picture0" style="vertical-align:middle;width:45%" /></td>
+<td style="text-align:center;width:50%"><img id="picture1" style="vertical-align:middle;width:45%" /></td>
+</tr>
+<tr>
+<td id="guess0" style="text-align:center;width:50%;font-family:verdana;font-size:10px;color:#FFFFFF;font-weight:bold"></td>
+<td id="guess1" style="text-align:center;width:50%;font-family:verdana;font-size:10px;color:#FFFFFF;font-weight:bold"></td>
+</tr>
+<tr>
+<td style="text-align:center;width:50%"><img id="picture2" style="vertical-align:middle;width:45%" /></td>
+<td style="text-align:center;width:50%"><img id="picture3" style="vertical-align:middle;width:45%" /></td>
+</tr>
+<tr>
+<td id="guess2" style="text-align:center;width:50%;font-family:verdana;font-size:10px;color:#FFFFFF;font-weight:bold"></td>
+<td id="guess3" style="text-align:center;width:50%;font-family:verdana;font-size:10px;color:#FFFFFF;font-weight:bold"></td>
+</tr>
+<tr>
+<td style="text-align:center;width:50%"><img id="picture4" style="vertical-align:middle;width:45%" /></td>
+<td style="text-align:center;width:50%"><img id="picture5" style="vertical-align:middle;width:45%" /></td>
+</tr>
+<tr>
+<td id="guess4" style="text-align:center;width:50%;font-family:verdana;font-size:10px;color:#FFFFFF;font-weight:bold"></td>
+<td id="guess5" style="text-align:center;width:50%;font-family:verdana;font-size:10px;color:#FFFFFF;font-weight:bold"></td>
+</tr>
+</table>
+</div>
+</div>
+</div>
