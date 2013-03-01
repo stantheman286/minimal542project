@@ -2,12 +2,15 @@
 //  Scraptcha device.  invoked using nodejs
 //
 
-var http = require('http');
-var fs   = require('fs');
-var HEL  = require('./httpEventListener.js').HttpEventListener;
-var OS   = require('os');
+//NODE libraries
+var fs     = require('fs');
+var OS     = require('os');
 var crypto = require('crypto');
-var dgram = require('dgram');
+var dgram  = require('dgram');
+var http   = require('http');
+var url    = require('url');
+//My libraries
+var HEL       = require('./httpEventListener.js').HttpEventListener;
 var scraptcha = require('../c/build/Release/myScraptcha');
 
 // Constants
@@ -62,39 +65,45 @@ function Device(listen_port) {
   //
   HEL.call(this,'cmd',listen_port);
   
-  //Compute uuid
-  var unique_str = OS.hostname()+listen_port;
-  if (OS.type() == 'Linux'){
-    //TODO: fill in for linux the MAC addr + listen_port
-    //unique_str = mac addr + listen_port;
-  } 
-  //make uuid from unique string, roughly following uuid v5 spec 
-  var hash = crypto.createHash('sha1').update(unique_str).digest('hex');
-  this.uuid = hash.substr(0,8)+"-"+hash.substr(8,4)+"-5"+hash.substr(12,3)
-              +"-b"+hash.substr(15,3)+"-"+hash.substr(18,12);
-              
   //init device info
   this.port   = listen_port;
   this.status = "ready"; //other options are "logging"
   this.state  = "none"; //no other state for such a simple device
+  this.uuid = this.computeUUID();
+  
+  //some device state
+  this.logging_timer = null;
+  this.manager_port = null;
+  this.manager_IP = null;
 
-  //add apps events here
-  this.addEventHandler('auto_capture',this.auto_capture); 
-  this.addEventHandler('getPicture',this.getPicture); 
-  this.addEventHandler('getCode',getCodeEvent); 
-  this.addEventHandler('getHTML',getHTMLEvent); 
+  //standard events
+  this.addEventHandler('getCode',this.getCodeEvent); 
+  this.addEventHandler('getHTML',this.getHTMLEvent); 
   this.addEventHandler('info',this.info);
   this.addEventHandler('ping',this.info);
   this.addEventHandler('acquire',this.acquire);
   
+  //implementation specific events
+  this.addEventHandler('auto_capture',this.auto_capture); 
+  this.addEventHandler('getPicture',this.getPicture); 
+  
+  //manually attach to manager.
+  this.manager_IP = 'bioturk.ee.washington.edu';
+  this.manager_port = 9090;
+  this.my_IP = OS.networkInterfaces().wlan0[0].address;
+  this.sendAction('addDevice',
+                  {port: listen_port, addr: this.my_IP},
+                  function(){});
+  
   //advertise that i'm here every 10 seconds until i'm aquired
-  var this_device = this;
+  /*var this_device = this;
   this.advert_timer = setInterval(function(){
     this_device.advertise('224.250.67.238',17768);
-  },10000) ;
+  },10000);*/
 }
 Device.prototype = Object.create(HEL.prototype);
 Device.prototype.constructor = Device;
+
 Device.prototype.advertise = function(mcastAddr,mport) {
   //broadcast on a specified multicast address/port that you exist
   // mcastAddr: the multicast address
@@ -112,6 +121,9 @@ Device.prototype.advertise = function(mcastAddr,mport) {
     udpsock.close();
   });
 };
+////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////EVENTS////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 Device.prototype.info = function(fields,response) {
   //
   // parses info request
@@ -141,10 +153,8 @@ Device.prototype.acquire = function(fields,response) {
   this.manager_port = parseInt(fields.port,10);
   this.manager_IP  = fields['@ip'] ;
   clearInterval(this.advert_timer);
-
-//  this.getPicture();  //ms: test, wait until acquired
 };
-function getCodeEvent(event_data, response) {
+Device.prototype.getCodeEvent = function(event_data, response) {
   //gets the app code and sends it in the response body
   //response: the HTTP response
   
@@ -157,8 +167,8 @@ function getCodeEvent(event_data, response) {
       response.end('cannot read file \n' + err);
     }
   });
-}
-function getHTMLEvent(event_data, response) {
+};
+Device.prototype.getHTMLEvent = function(event_data, response) {
   //gets the app code and sends it in the response body
   //response: the HTTP response
   
@@ -171,8 +181,9 @@ function getHTMLEvent(event_data, response) {
       response.end('cannot read file \n' + err);
     }
   });
-}
+};
 
+////////////////////IMPLEMENTATION SPECIFIC COMMANDS////////////////////////////
 Device.prototype.getPicture = function(fields,response) {
   "use strict";
 
@@ -295,14 +306,70 @@ Device.prototype.auto_capture = function(fields,response) {
   
   response.end(); 
 };
+///////////////////////////////HELPER METHODS///////////////////////////////////
+Device.prototype.getTemp = function() {
+  //
+  // Gets the temp from rpi.  Note this is blocking since the underlying
+  // call to ioctl is blocking.
+  // returns: the temp in deg C
+  //
+  var adcread = ((result[1]<<2) | (result[2]>>>6))*3.3/1024;
+  var resistance = 3.3*10000/adcread - 10000;
+  
+  var a = 0.00113902;
+  var b = 0.000232276;
+  var c = 9.67879E-8;
+  var lr = Math.log(resistance);
+  var temp = -273.15+1/(a+b*lr+c*lr*lr*lr);
 
-///////////////////////////////////// MAIN ////////////////////////////////////
+  return temp;  
+};
+Device.prototype.sendAction = function(action,fields,callback) {
+  //
+  // sends action to manager.
+  // action: string - the action to send to manager
+  // fields: object - a hash of fields to send to in the request
+  // callback: called when done takes responce data as argument
+  //
+  
+  //TODO: response_data sholud probably be a buffer incase of binary data
+  var response_data = '';
+  fields.action = action;
+  var options = {
+    hostname: this.manager_IP,
+    port: this.manager_port,
+    path: url.format({query:fields, pathname:'/'}),
+    method: "GET"
+  };
+  console.log(options.path);
+  var actionReq = http.request(options,function(result){
+    result.on('data', function(chunk){
+      response_data += chunk;
+    });
+    result.on('end',function(){
+      callback(response_data);
+    });
+  });
+  actionReq.end();
+};
+Device.prototype.computeUUID = function(){
+  //
+  // Computes the Device's UUID from a combination of listen port and hostname
+  //
+  var unique_str = OS.hostname()+this.port;
+  if (OS.type() === 'Linux'){
+    //TODO: fill in for linux the MAC addr + listen_port
+    //unique_str = mac addr + listen_port;
+  } 
+  //make uuid from unique string, roughly following uuid v5 spec 
+  var hash = crypto.createHash('sha1').update(unique_str).digest('hex');
+  return uuid = hash.substr(0,8)+"-"+hash.substr(8,4)+"-5"+hash.substr(12,3) +
+              "-b"+hash.substr(15,3)+"-"+hash.substr(18,12);  
+};
+
+///////////////////////////////////// MAIN /////////////////////////////////////
 //if i'm being called from command line
 if(require.main === module) {
-  var d1 = new Device(1234);
-
-//  setTimeout(function(){
-//    var d2 = new Device(8081);
-//  },1000);
+  var d1 = new Device(4843);
 }
 
