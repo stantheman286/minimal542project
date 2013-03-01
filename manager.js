@@ -12,6 +12,7 @@ var data_table_name = 'manager';
 var big_table_name = 'managerBig';
 var devices_table_name = "devices";
 var dash_HTML  = './dash.html';
+var ping_interval = 30;
 var keystr = "obqQm3gtDFZdaYlENpIYiKzl+/qARDQRmiWbYhDW9wreM/APut73nnxCBJ8a7PwW";
 var __DEBUG_LEVEL__ = 15;
 
@@ -46,7 +47,7 @@ function Manager(listen_port){
   var this_manager = this;
   this.dead_check_timer = setInterval(function(){
     this_manager.deviceKeepAlive();
-  },1000*30);
+  },1000*ping_interval);
 }
 Manager.prototype = Object.create(HEL.prototype);
 Manager.prototype.constructor = Manager;
