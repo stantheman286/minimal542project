@@ -6,13 +6,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 var timer;
 
-function MyApp(divobj,uuid,parent){
+function MyApp(divobj,uuid,dash){
   this.myuuid = uuid;
   if (!divobj) {
     throw "First argument must be a valid html object";
   }
   this.div = divobj;
-  this.dash = parent;
+  this.dash = dash;
 }
 MyApp.prototype = Object.create(AbstractApp.prototype);
 
