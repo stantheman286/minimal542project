@@ -44,20 +44,11 @@ function Manager(listen_port){
   //TODO: periodically check for dead devices
 }
 Manager.prototype = Object.create(HEL.prototype);
-Manager.prototype.constructor = Manager;  
-Manager.prototype.addDevice = function(device) {
-  "use strict";
-  //
-  //Add a device to the known devices list.
-  //
-  var d = new Date();
-  device.last_seen = d.getTime()/1000.0;
-  
-  console.log("adding dev:");
-  console.dir(device);
-  this.devices[device.uuid.toLowerCase()] = device;
-  this.updateDevlistDB();
-};
+Manager.prototype.constructor = Manager;
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////// Action Handlers /////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 Manager.prototype.storeData = function(fields, response) {
   "use strict";
   //
@@ -124,44 +115,6 @@ Manager.prototype.storeData = function(fields, response) {
       }
     }
   });
-};
-Manager.prototype.checkDBTable = function(tbl_name,callback) {
-  "use strict";
-  //
-  // Checks to make sure tabe tbl_name exists
-  // if it does not it gets created
-  // tbl_name: the table to check for
-  // callback: function to be called when complete
-  //           callback(error)
-  //           error: the error string retuned by mysql or null if success
-  //
-  var this_manager = this;
-  var q = ''; //the query string
-  if  ((tbl_name !== data_table_name) && (tbl_name !== big_table_name)) {
-    callback("ERROR: table unknown");
-  }
-  
-  this.dbconn.query("SHOW TABLES LIKE '"+tbl_name+"';", function(e,r) {
-    if (!e && r.length < 1 ){
-      q = 'CREATE TABLE '+ tbl_name +' (' +
-          'epoch BIGINT UNSIGNED NOT NULL, ' + 
-          'uuid CHAR(36) NOT NULL, ' +
-          ((tbl_name === data_table_name) ? ' data ' : ' meta ') +
-          'VARCHAR(1024), ' +
-          ((tbl_name === data_table_name) ? '' : ' bigdata MEDIUMBLOB, '  ) +
-          'PRIMARY KEY (epoch), ' +
-          'INDEX (uuid)' +');';
-      console.log("ADDING TABLE: \n" + q);
-      this_manager.dbconn.query(q,function(e,r){
-        setTimeout(callback(e),0);
-      });
-        
-    } else {
-      //queue up callbackfn
-      setTimeout(callback(e),0);
-    }
-  });
-  
 };
 Manager.prototype.getData = function(fields,response){
   "use strict";
@@ -244,66 +197,6 @@ Manager.prototype.retrieveBig = function(fields,response) {
       response.end(r[0].bigdata);
     }
   });
-  
-};
-Manager.prototype.queryDeviceInfo = function(ip,port){
-  "use strict";
-  //
-  //querys a device for more information
-  // ip: the devices ip or host name
-  // port: the tcp port to send http requests too.
-  //
-  var this_manager = this;
-  var options = {
-    host   : ip,
-    port   : port,
-    path   : '/?cmd=info',
-    method : 'GET',
-  };
-  //TODO: this can trigger an exception if the device is gone
-  //TODO: hande the exception
-  var inforeq = http.request(options, function(res){
-    var resp = '';
-    var dev_info = null;
-    if (res.statusCode == 200) {
-      res.setEncoding('utf8');
-      res.on('data', function(chunk){
-        resp += chunk;
-      });
-      res.on('end',function(){
-        //TODO: represent as xml
-        dev_info = JSON.parse(resp);
-        dev_info.ip = ip;
-        dev_info.port = port;
-        this_manager.addDevice(dev_info );
-      });
-    }
-  });
-  inforeq.on("error",function(e){
-    //something wen't wrong, likely device unreachable
-    dbg("cannot add client. " +e,5);
-  });
-  inforeq.end();
-  
-  
-  options = {
-    host   : ip,
-    port   : port,
-    path   : '/?cmd=acquire&port=' + this.port,
-    method : 'GET',
-  };
-  var acqreq = http.request(options,function(res){
-    if(res.statusCode==200) {
-      //good do nothing.
-    } else {
-      //TODO: decide what to do with the error.
-    }
-  });
-  acqreq.on("error",function(e){
-    //something wen't wrong, likely device unreachable
-    dbg("cannot acquire client. " +e,5);
-  });
-  acqreq.end();
   
 };
 Manager.prototype.getDevList = function(fields,response) {
@@ -398,6 +291,121 @@ Manager.prototype.forward = function(fields,response) {
     }
     
   }
+};
+
+////////////////////////////////////////////////////////////////////////////////
+///////////////////////////// Device Methods ///////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+Manager.prototype.addDevice = function(device) {
+  "use strict";
+  //
+  //Add a device to the known devices list.
+  //
+  var d = new Date();
+  device.last_seen = d.getTime()/1000.0;
+  
+  console.log("adding dev:");
+  console.dir(device);
+  this.devices[device.uuid.toLowerCase()] = device;
+  this.updateDevlistDB();
+};
+Manager.prototype.queryDeviceInfo = function(ip,port){
+  "use strict";
+  //
+  //querys a device for more information
+  // ip: the devices ip or host name
+  // port: the tcp port to send http requests too.
+  //
+  var this_manager = this;
+  var options = {
+    host   : ip,
+    port   : port,
+    path   : '/?cmd=info',
+    method : 'GET',
+  };
+  //TODO: this can trigger an exception if the device is gone
+  //TODO: hande the exception
+  var inforeq = http.request(options, function(res){
+    var resp = '';
+    var dev_info = null;
+    if (res.statusCode == 200) {
+      res.setEncoding('utf8');
+      res.on('data', function(chunk){
+        resp += chunk;
+      });
+      res.on('end',function(){
+        //TODO: represent as xml
+        dev_info = JSON.parse(resp);
+        dev_info.ip = ip;
+        dev_info.port = port;
+        this_manager.addDevice(dev_info );
+      });
+    }
+  });
+  inforeq.on("error",function(e){
+    //something wen't wrong, likely device unreachable
+    dbg("cannot add client. " +e,5);
+  });
+  inforeq.end();
+  
+  
+  options = {
+    host   : ip,
+    port   : port,
+    path   : '/?cmd=acquire&port=' + this.port,
+    method : 'GET',
+  };
+  var acqreq = http.request(options,function(res){
+    if(res.statusCode==200) {
+      //good do nothing.
+    } else {
+      //TODO: decide what to do with the error.
+    }
+  });
+  acqreq.on("error",function(e){
+    //something wen't wrong, likely device unreachable
+    dbg("cannot acquire client. " +e,5);
+  });
+  acqreq.end();
+  
+};
+Manager.prototype.checkDBTable = function(tbl_name,callback) {
+  "use strict";
+  //
+  // Checks to make sure tabe tbl_name exists
+  // if it does not it gets created
+  // tbl_name: the table to check for
+  // callback: function to be called when complete
+  //           callback(error)
+  //           error: the error string retuned by mysql or null if success
+  //
+  var this_manager = this;
+  var q = ''; //the query string
+  if  ((tbl_name !== data_table_name) && (tbl_name !== big_table_name)) {
+    callback("ERROR: table unknown");
+  }
+  
+  this.dbconn.query("SHOW TABLES LIKE '"+tbl_name+"';", function(e,r) {
+    if (!e && r.length < 1 ){
+      q = 'CREATE TABLE '+ tbl_name +' (' +
+          'epoch BIGINT UNSIGNED NOT NULL, ' + 
+          'uuid CHAR(36) NOT NULL, ' +
+          ((tbl_name === data_table_name) ? ' data ' : ' meta ') +
+          'VARCHAR(1024), ' +
+          ((tbl_name === data_table_name) ? '' : ' bigdata MEDIUMBLOB, '  ) +
+          'PRIMARY KEY (epoch), ' +
+          'INDEX (uuid)' +');';
+      console.log("ADDING TABLE: \n" + q);
+      this_manager.dbconn.query(q,function(e,r){
+        setTimeout(callback(e),0);
+      });
+        
+    } else {
+      //queue up callbackfn
+      setTimeout(callback(e),0);
+    }
+  });
+  
 };
 Manager.prototype.setupMulticastListener = function(mcastAddr,port){
   "use strict";
@@ -499,6 +507,17 @@ Manager.prototype.forgetDevice = function(uuid){
     dbg('query:'+q,10);
   });
 };
+Manager.prototype.deviceKeepAlive = function(){
+  //
+  // Checks to see if a device is still there.  If it is, updates last seen.
+  // If the device is not there, it will remove the device from the dev list.
+  // and active device table in the DB.
+  //
+
+  for (uuid in this.devices) {
+    //TODO: fill in
+  }
+}
 //console debug code:
 function dbg(message, level){
   //
