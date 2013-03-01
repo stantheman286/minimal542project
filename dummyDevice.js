@@ -1,6 +1,7 @@
 //
 //  Dummy device.  invoked using nodejs
 //
+// test
 
 var fs   = require('fs');
 var HEL  = require('./httpEventListener.js').HttpEventListener;
