@@ -41,7 +41,12 @@ function Manager(listen_port){
   
   this.loadDevicelistDB();
   this.setupMulticastListener('224.250.67.238',17768);
-  //TODO: periodically check for dead devices
+  
+  //periodically check for dead devices
+  var this_manager = this;
+  this.dead_check_timer = setInterval(function(){
+    this_manager.deviceKeepAlive();
+  },1000*30);
 }
 Manager.prototype = Object.create(HEL.prototype);
 Manager.prototype.constructor = Manager;
@@ -323,8 +328,7 @@ Manager.prototype.queryDeviceInfo = function(ip,port){
     path   : '/?cmd=info',
     method : 'GET',
   };
-  //TODO: this can trigger an exception if the device is gone
-  //TODO: hande the exception
+  
   var inforeq = http.request(options, function(res){
     var resp = '';
     var dev_info = null;
@@ -508,16 +512,68 @@ Manager.prototype.forgetDevice = function(uuid){
   });
 };
 Manager.prototype.deviceKeepAlive = function(){
+  "use strict";
   //
   // Checks to see if a device is still there.  If it is, updates last seen.
   // If the device is not there, it will remove the device from the dev list.
   // and active device table in the DB.
   //
-
-  for (uuid in this.devices) {
-    //TODO: fill in
+  var this_manager = this;
+  var pingdev = function(uuid){ return function(head,data){
+    if(head) {
+      this_manager.devices[uuid].last_seen = (new Date()).getTime()/1000.0;
+    } else {
+      this_manager.forgetDevice(uuid);
+    }
+  };};
+  for (var uuid in this.devices) {
+    this.sendCMD(uuid,'ping',{},pingdev(uuid));    
   }
 }
+Manager.prototype.sendCMD = function(uuid, command_name, fields,callback){
+  //
+  // Sends a command to the device
+  // uuid: String.  the device's uuid
+  // command_name: string. the command to send
+  // fields: object. a hash of query options. may be null or {}
+  // callback: function(header,data).  
+  //       header: http.ClientResponse - the device's response or null if error
+  //       data: 'string' - the response body.
+  //
+  var this_manager = this;
+  if (!fields) {
+    fields = {};
+  }
+  fields.cmd = command_name;
+  
+  var options = {
+    host   : this.devices[uuid].ip,
+    port   : this.devices[uuid].port,
+    path: url.format({query: fields,pathname: '/'}),
+    method : 'GET'
+  };
+  
+  var inforeq = http.request(options, function(res){
+    var resp = '';
+    var dev_info = null;
+    if (res.statusCode == 200) {
+      res.setEncoding('utf8');
+      res.on('data', function(chunk){
+        resp += chunk;
+      });
+      res.on('end',function(){
+        callback(res,resp);
+      });
+    }
+  });
+  inforeq.on("error",function(e){
+    //something wen't wrong, likely device unreachable
+    dbg("cannot send command. " +e,5);
+    callback(null,e);
+  });
+  inforeq.end();
+  dbg("sending command: " +options.path,10);
+};
 //console debug code:
 function dbg(message, level){
   //
