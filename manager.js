@@ -8,9 +8,12 @@ var dgram = require('dgram');
 
 
 //parameters
-var table_name = 'manager';
+var data_table_name = 'manager';
+var big_table_name = 'managerBig';
+var devices_table_name = "devices";
 var dash_HTML  = './dash.html';
 var keystr = "obqQm3gtDFZdaYlENpIYiKzl+/qARDQRmiWbYhDW9wreM/APut73nnxCBJ8a7PwW";
+var __DEBUG_LEVEL__ = 15;
 
 ///////////////////////////////////// MANAGER //////////////////////////////////
 function Manager(listen_port){
@@ -18,6 +21,7 @@ function Manager(listen_port){
   HEL.call(this,'action',listen_port);
   this.port = listen_port;
   this.devices = {};  //a hash table of known devices keyed by uuid
+  this.insert_seq = 0;
    
   //read dbconfig from an external file that is not part of the code repository
   var dbconfigTEXT = fs.readFileSync('./dbconfig.JSON','utf8');
@@ -26,11 +30,18 @@ function Manager(listen_port){
   this.dbconn.connect();
   
   this.addEventHandler('store',this.storeData);
+  this.addEventHandler('storeBig',this.storeData);
   this.addEventHandler('retrieve',this.getData);
+  this.addEventHandler('retrieveBig',this.retrieveBig);
+  this.addEventHandler('listBig',this.getData);
   this.addEventHandler('list',this.getDevList);
   this.addEventHandler('forward',this.forward);
+  this.addEventHandler('ping',this.ping);
+  this.addEventHandler('addDevice',this.remoteAddDev);
   
+  this.loadDevicelistDB();
   this.setupMulticastListener('224.250.67.238',17768);
+  //TODO: periodically check for dead devices
 }
 Manager.prototype = Object.create(HEL.prototype);
 Manager.prototype.constructor = Manager;  
@@ -45,17 +56,30 @@ Manager.prototype.addDevice = function(device) {
   console.log("adding dev:");
   console.dir(device);
   this.devices[device.uuid.toLowerCase()] = device;
+  this.updateDevlistDB();
 };
 Manager.prototype.storeData = function(fields, response) {
   "use strict";
   //
-  // Event handler for store
+  // Event handler for store and storeBig
   // fields: the query fields and post data
   // response: the http.ServerResponse object.
   //
   var dbconnection = this.dbconn;
+  this.insert_seq = (this.insert_seq + 1)%1000;
+  var insert_seq = this.insert_seq;
+  var table_name;
+  var big = false;
+  
+  if (fields.action === "storeBig") {
+    table_name = big_table_name;
+    big = true;
+  } else {
+    table_name = data_table_name;
+    big = false;
+  }
   this.checkDBTable(table_name,function(e){
-    var pd;
+    var pd, d, uuid;
     if (fields['@post_data']) {
       pd = dbconnection.escape(fields['@post_data']);
     }
@@ -65,20 +89,39 @@ Manager.prototype.storeData = function(fields, response) {
     } else if (!fields.uuid) {
       response.writeHead(400, {'Content-Type': 'text/plain'});
       response.end('missing device uuid');
-    } else if (fields['@post_data'].length>1024){
+    } else if (fields['@post_data'].length>1024 && !big){
       response.writeHead(413, {'Content-Type': 'text/plain'});
       response.end('post data too large try storeBIG action');
     } else {
       //TODO: update last seen
-      var uuid = dbconnection.escape(fields.uuid);
-      var d = new Date();
-      dbconnection.query("INSERT INTO " + table_name +
-                        "(epoch,uuid,data) VALUES" +
-                        "(" + d.getTime() + ", "+uuid + //getTime() is in mS
-                        ", " + pd + ");",function(e,r){
-        response.writeHead(200, {'Content-Type': 'text/plain'});
-        response.end('wrote '+fields['@post_data'].length+' bytes.');
-      });
+      uuid = dbconnection.escape(fields.uuid);
+      d = new Date();
+      //note: insert_seq is appended to the getTime() value to uniqueify it
+      //a collision will only happen if there are >1000 inserts per milisecond.
+      if (big) {
+        dbconnection.query("INSERT INTO " + big_table_name +
+                          "(epoch,uuid,meta,bigdata) VALUES (" +
+                          String(d.getTime()*1000 + insert_seq) +
+                          ", " + uuid +
+                          ", " + dbconnection.escape(fields.meta) +
+                          ", " + (pd?pd:"null") +
+                          ");",function(e,r){
+          response.writeHead(200, {'Content-Type': 'text/plain'});
+          response.write("db response: " + r);
+          response.write("\ndb error: " + e);
+          response.end('\nwrote big'+fields['@post_data'].length+' bytes.');
+        });        
+      } else {
+        dbconnection.query("INSERT INTO " + data_table_name +
+                          "(epoch,uuid,data) VALUES (" +
+                          String(d.getTime()*1000 + insert_seq) +
+                          ", " + uuid + 
+                          ", " + (pd?pd:"null") +
+                          ");",function(e,r){
+          response.writeHead(200, {'Content-Type': 'text/plain'});
+          response.end('wrote '+fields['@post_data'].length+' bytes.');
+        });
+      }
     }
   });
 };
@@ -92,38 +135,45 @@ Manager.prototype.checkDBTable = function(tbl_name,callback) {
   //           callback(error)
   //           error: the error string retuned by mysql or null if success
   //
+  var this_manager = this;
+  var q = ''; //the query string
+  if  ((tbl_name !== data_table_name) && (tbl_name !== big_table_name)) {
+    callback("ERROR: table unknown");
+  }
   
   this.dbconn.query("SHOW TABLES LIKE '"+tbl_name+"';", function(e,r) {
-    if (!e && r.length < 1){
-      makeTable();
+    if (!e && r.length < 1 ){
+      q = 'CREATE TABLE '+ tbl_name +' (' +
+          'epoch BIGINT UNSIGNED NOT NULL, ' + 
+          'uuid CHAR(36) NOT NULL, ' +
+          ((tbl_name === data_table_name) ? ' data ' : ' meta ') +
+          'VARCHAR(1024), ' +
+          ((tbl_name === data_table_name) ? '' : ' bigdata MEDIUMBLOB, '  ) +
+          'PRIMARY KEY (epoch), ' +
+          'INDEX (uuid)' +');';
+      console.log("ADDING TABLE: \n" + q);
+      this_manager.dbconn.query(q,function(e,r){
+        setTimeout(callback(e),0);
+      });
+        
     } else {
       //queue up callbackfn
       setTimeout(callback(e),0);
     }
   });
   
-  function makeTable(){
-    this.dbconn.query('CREATE TABLE '+tbl_name+' (' +
-                       'id INT NOT NULL AUTO_INCREMENT, ' +
-                       'epoch BIGINT NOT NULL, ' + 
-                       'uuid CHAR(36) NOT NULL, ' +
-                       'data VARCHAR(1024), ' +
-                       'PRIMARY KEY (id) ' +
-                      ');',function(e,r){
-      setTimeout(callback(e),0);
-    });
-  }
 };
 Manager.prototype.getData = function(fields,response){
   "use strict";
   //
-  //Event handler for ?action=retrieve.
+  //Event handler for ?action=retrieve and ?action=listBig
   // fields: the query fields
   // response: the http.ServerResponse object.
   //
   var since = parseInt(fields.since,10);
   var q,order;
   var timeArg = '';
+  var big = (fields.action === "listBig");
   
   if (!fields.uuid) {
     response.writeHead(400, {'Content-Type': 'text/plain'});
@@ -131,29 +181,70 @@ Manager.prototype.getData = function(fields,response){
   } else {
     //construct the query
     if( since ){
-      timeArg = " AND epoch > " + since+" ";
+      timeArg = " AND epoch > " + (since*1000+999)+" ";
     }
     if (fields.since === "latest") {
-      order = " ORDER BY id DESC LIMIT 1;"; //most recent
+      order = " ORDER BY epoch DESC LIMIT 1;"; //most recent
     } else {
-      order = " ORDER BY id ASC;";
+      order = " ORDER BY epoch ASC;";
     }
-    q = "SELECT data FROM " + table_name + " WHERE uuid LIKE " +
+    if (big) {
+      q = "SELECT epoch,meta FROM " + big_table_name + " WHERE uuid LIKE " +
             this.dbconn.escape(fields.uuid) + timeArg + order;
-    
+    } else { // action === retrieve
+      q = "SELECT data FROM " + data_table_name + " WHERE uuid LIKE " +
+            this.dbconn.escape(fields.uuid) + timeArg + order;
+    }
+    console.log("query: "+q);
     this.dbconn.query(q, function(e,r) {
       if(e) {
         response.writeHead(503, {'Content-Type': 'text/plain'});
         response.end('database error: ' + e);
       } else {
         response.writeHead(200, {'Content-Type': 'text/plain'});
-        for (var i = 0; i<r.length; i++){
-          response.write(r[i].data + "\n");
+        if (!big){
+          for (var i = 0; i<r.length; i++){
+            response.write(r[i].data + "\n");
+          }
+        } else {
+          response.write(JSON.stringify(r.map(function(x){
+            var y = {};
+            y.id = x.epoch;
+            y.meta = x.meta;
+            return y;
+          })));
         }
         response.end();
       }
     });
   }
+};
+Manager.prototype.retrieveBig = function(fields,response) {
+  "use strict";
+  //
+  //Event handler for ?action=retrieveBig
+  // fields: the query fields
+  // response: the http.ServerResponse object.
+  //
+  var q;
+  //construct the query
+  
+  var id = parseInt(fields.id,10);
+  
+  q = "SELECT bigdata FROM " + big_table_name + " WHERE epoch = " +
+      String(id) + ";";
+  
+  console.log("query: "+q);
+  this.dbconn.query(q, function(e,r) {
+    if(e) {
+      response.writeHead(503, {'Content-Type': 'text/plain'});
+      response.end('database error: ' + e);
+    } else {
+      response.writeHead(200);//, {'Content-Type': 'text/plain'});
+      response.end(r[0].bigdata);
+    }
+  });
+  
 };
 Manager.prototype.queryDeviceInfo = function(ip,port){
   "use strict";
@@ -171,7 +262,7 @@ Manager.prototype.queryDeviceInfo = function(ip,port){
   };
   //TODO: this can trigger an exception if the device is gone
   //TODO: hande the exception
-  http.request(options, function(res){
+  var inforeq = http.request(options, function(res){
     var resp = '';
     var dev_info = null;
     if (res.statusCode == 200) {
@@ -187,7 +278,13 @@ Manager.prototype.queryDeviceInfo = function(ip,port){
         this_manager.addDevice(dev_info );
       });
     }
-  }).end();
+  });
+  inforeq.on("error",function(e){
+    //something wen't wrong, likely device unreachable
+    dbg("cannot add client. " +e,5);
+  });
+  inforeq.end();
+  
   
   options = {
     host   : ip,
@@ -195,13 +292,19 @@ Manager.prototype.queryDeviceInfo = function(ip,port){
     path   : '/?cmd=acquire&port=' + this.port,
     method : 'GET',
   };
-  http.request(options,function(res){
+  var acqreq = http.request(options,function(res){
     if(res.statusCode==200) {
       //good do nothing.
     } else {
       //TODO: decide what to do with the error.
     }
-  }).end();
+  });
+  acqreq.on("error",function(e){
+    //something wen't wrong, likely device unreachable
+    dbg("cannot acquire client. " +e,5);
+  });
+  acqreq.end();
+  
 };
 Manager.prototype.getDevList = function(fields,response) {
   "use strict";
@@ -214,8 +317,42 @@ Manager.prototype.getDevList = function(fields,response) {
   response.writeHead(200, {'Content-Type': 'text/plain'});
   response.end(JSON.stringify(this.devices));
 };
+Manager.prototype.ping = function(fields,response) {
+  "use strict";
+  //
+  // Event handler for ?action=ping
+  // just returns 200ok with no body
+  // fields: the query fields 
+  // response: the http.ServerResponse object.
+  //
+  
+  response.writeHead(200, {'Content-Type': 'text/plain'});
+  response.end();
+};
+Manager.prototype.remoteAddDev = function(fields,response) {
+  "use strict";
+  //
+  // Event handler for ?action=addDevice
+  // attempts to add the device described by addr and ip.
+  // returns 200 ok with no body
+  // fields: the query fields 
+  // response: the http.ServerResponse object.
+  //
+  var port = parseInt(fields.port,10);
+  
+  if(fields.addr && port){
+    response.writeHead(200, {'Content-Type': 'text/plain'});
+    response.end();
+    this.queryDeviceInfo(fields.addr,port);
+  } else {
+    response.writeHead(503, {'Content-Type': 'text/plain'});
+    response.end('error: no addr or port');
+  }
+  
+};
 Manager.prototype.forward = function(fields,response) {
   "use strict";
+  var this_manager = this;
   if (!fields.uuid) {  
     response.writeHead(400, {'Content-Type': 'text/plain'});
     response.end('missing device uuid');
@@ -225,7 +362,7 @@ Manager.prototype.forward = function(fields,response) {
   } else {
     
     var options = {
-      host: this.devices[fields.uuid].addr,
+      host: this.devices[fields.uuid].ip,
       port: this.devices[fields.uuid].port,
       path: url.format({query: fields,pathname: '/'}),
       method: 'GET',
@@ -241,13 +378,17 @@ Manager.prototype.forward = function(fields,response) {
           app_code += chunk;
         });
         res.on('end',function(){
-          response.writeHead(200, {'Content-Type': res.headers['content-type']});
+          response.writeHead(200,{'Content-Type': res.headers['content-type']});
           response.end(app_code);
         });
       } else {
         response.writeHead(503, {'Content-Type': 'text/plain'});
         response.end("device error");
       }
+    });
+    fwd_req.on("error",function(e){
+      dbg("device unreachable: "+e,1);
+      this_manager.forgetDevice(fields.uuid);
     });
     
     if(fields['@post_data']) {
@@ -278,6 +419,112 @@ Manager.prototype.setupMulticastListener = function(mcastAddr,port){
   udpsock.bind(port);
   udpsock.addMembership(mcastAddr);
 };
+Manager.prototype.updateDevlistDB = function(){
+  "use_strict";
+  var q;
+  var this_manager = this;
+  var temp;
+  
+  checkdevDBTable(function(e){
+    if(!e) {
+      //insert/update the device list
+      for(var uuid in this_manager.devices) {
+        temp = this_manager.devices[uuid];
+        q = "REPLACE INTO " + devices_table_name + " VALUES (" +
+            "'" + temp.uuid +"', " +
+            "'" + temp.status +"', " +
+            "'" + temp.state +"', " +
+            "'" + temp.name +"', " +
+            "'" + temp.ip +"', " +
+            temp.port +", " +
+            temp.last_seen +
+             ");";
+        this_manager.dbconn.query(q,function(e,r){
+          if (e) {
+            dbg("db error 3 - "+e,1);
+            dbg("query was:" + q, 10);
+          }
+        });
+      }
+    }
+  });
+  
+  function checkdevDBTable(cb) {
+    //if the table does not exist create it
+    this_manager.dbconn.query("SHOW TABLES LIKE '"+ devices_table_name + "' ;",
+                      function(e,r){
+      if(!e && r.length<1 ) {
+        dbg('creating device table',10);
+        q = 'CREATE TABLE ' + devices_table_name + ' (' +
+            'uuid CHAR(36) NOT NULL, ' +
+            'status CHAR(50), ' +
+            'state VARCHAR(1024), ' +
+            'name VARCHAR(50), ' +
+            'ip VARCHAR(253), ' +
+            'port INT UNSIGNED, ' +
+            'last_seen DOUBLE, ' +
+            'PRIMARY KEY (uuid) ' +
+            ');';
+          this_manager.dbconn.query(q, function(err,resp){
+            cb(e);
+          });
+      } else if(e){
+        dbg('db error 1- updateDevlistDB:' + e,1);
+      } 
+      cb(e);
+    });
+  }
+};
+Manager.prototype.loadDevicelistDB = function(){
+  "use strict";
+  var this_manager = this;
+  this.dbconn.query("SELECT * FROM " + devices_table_name + ";", function(e,r){
+    if(e) {
+      dbg('db error loadDevicelistDB: '+e,1);
+    } else {
+      //this_manager.devices = {};
+      dbg("loading device list from DB...", 10);
+      for (var i = 0; i<r.length; i++){
+        this_manager.devices[r[i].uuid] = r[i];
+      }
+    }
+  });
+}
+Manager.prototype.forgetDevice = function(uuid){
+  delete this.devices[uuid];
+  var q = "DELETE FROM " + devices_table_name + " WHERE uuid LIKE '" +
+          uuid + "';"
+  this.dbconn.query(q, function(e,r){
+    dbg('deleted device.',5);
+    dbg('query:'+q,10);
+  });
+};
+//console debug code:
+function dbg(message, level){
+  //
+  // prints debug message to console.
+  // message: a string with debug message
+  // level: the level
+  //        1) errors only
+  //        5) warnings
+  //        10) debug
+  //
+  var lvlmsg = "debug ";
+  if(!level){
+    level = 10;
+  }
+  if (level<=5) {
+    lvlmsg = "warning ";
+  }
+  if (level<=1) {
+    lvlmsg = "error ";
+  }
+  if (__DEBUG_LEVEL__>= level) {
+    
+    console.log(lvlmsg + ": " + message);
+  }
+}
+
 //////////////////////////////STARTUP CODE/////////////////////////////////////
 //if i'm being called from command line
 if(require.main === module) {
