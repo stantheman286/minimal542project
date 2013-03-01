@@ -121,9 +121,9 @@ MyApp.prototype.update = function(){
   var this_app = this;
   var this_uuid = this.myuuid;
   
-  // Set epoch to past 10 minutes to reduce data intake
+  // Set epoch to past 60 minutes to reduce data intake
   var d = new Date();
-  var since = d.getTime() - (10*60*1000);
+  var since = d.getTime() - (60*60*1000);
 
   // Get the info for the latest image and then post it to the app
   this_app.sendEvent('listBig', {since: since, uuid: this_uuid}, function(e, r) {
@@ -132,8 +132,8 @@ MyApp.prototype.update = function(){
     } else {
       var info = JSON.parse(r);
 
-      // Display up to the last 6 images and guesses in app
-      for(var i = 0; i < 6; i++) {
+      // Display up to the last 4 images and guesses in app
+      for(var i = 0; i < 4; i++) {
         if (info[i]) {
           this_app.picture[i].src = '/?action=retrieveBig&id=' + info[info.length-(i+1)].id; // Oldest first order, start from end
           this_app.guess[i].innerHTML= (JSON.parse(info[info.length-(i+1)].meta)).guess;
@@ -164,7 +164,7 @@ MyApp.prototype.getAllElements = function(){
   // Picture and guess modules
   this.picture = new Array();
   this.guess = new Array();
-  for (var i = 0; i < 6; i++) {
+  for (var i = 0; i < 4; i++) {
     this.picture[i] = this.getElement("picture" + i);
     this.guess[i] = this.getElement("guess" + i);
   }

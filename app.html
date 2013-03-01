@@ -1,6 +1,7 @@
-<div id="containter" style="text-align:center;width:100%">
-<div id="overall_align" style="margin: 0px auto;width:95%">
-<br />
+<div id="container" style="text-align:center;background-color:#FF0000;height:400px">
+<center>
+<div id="overall_align" style="margin: 0px 10px 0px 10px">
+<div id="spacer1" style="height:10px">&nbsp;</div>
 <div id="auto_capture_container" style="text-align:center;background-color:#333333;font-family:verdana;font-size:11px;color:#FFFFFF">
 Auto Capture: 
 <input type="radio" name="temp" id="auto_on">On&nbsp;
@@ -10,43 +11,38 @@ Auto Capture:
 <input type="text" id="sample_rate" size="3" maxlength="1" value="1" />
 <button id="auto_set" style="background-color:#666699;font-family:verdana;font-size:10px;color:#FFFFFF;font-weight:bold">Set</button>
 </div>
-<div id="auto_refresh_container" style="text-align:center;background-color:#333333;font-family:verdana;font-size:11px;color:#FFFFFF">
+<div id="auto_refresh_container" style="margin-bottom:10px;text-align:center;background-color:#333333;font-family:verdana;font-size:11px;color:#FFFFFF">
  Refresh Rate (every 'n' sec): 
 <input type="text" id="refresh_rate" size="3" maxlength="2" value="1" />
 <button id="refresh_set_button" style="background-color:#666699;font-family:verdana;font-size:10px;color:#FFFFFF;font-weight:bold">Set</button>
 </div>
-<br />
-<div id="picture_guess_container" style="text-align:center;background-color:#333333">
+<div id="spacer2" style="height:10px">&nbsp;</div>
+<div id="picture_guess_container" style="margin: 0px 0px 0px 0px;text-align:center;background-color:#333333;">
 <button id="take_picture_button" style="background-color:#666699;font-family:verdana;font-size:10px;color:#FFFFFF;font-weight:bold">Take Picture</button>&nbsp;
 <button id="refresh_button" style="background-color:#666699;font-family:verdana;font-size:10px;color:#FFFFFF;font-weight:bold">Refresh</button>
-<br />
-<br />
+<div id="spacer3" style="height:10px">&nbsp;</div>
 <table style="padding:2px;spacing:5px">
 <tr>
-<td style="text-align:center;width:50%"><img id="picture0" style="vertical-align:middle;width:45%" /></td>
-<td style="text-align:center;width:50%"><img id="picture1" style="vertical-align:middle;width:45%" /></td>
+<td colspan="3" style="text-align:center;"><img id="picture0" style="vertical-align:middle;width:60%" /></td>
 </tr>
 <tr>
-<td id="guess0" style="text-align:center;width:50%;font-family:verdana;font-size:10px;color:#FFFFFF;font-weight:bold"></td>
-<td id="guess1" style="text-align:center;width:50%;font-family:verdana;font-size:10px;color:#FFFFFF;font-weight:bold"></td>
+<td colspan="3" id="guess0" style="text-align:center;font-family:verdana;font-size:16px;color:#FFFFFF;font-weight:bold"></td>
 </tr>
 <tr>
-<td style="text-align:center;width:50%"><img id="picture2" style="vertical-align:middle;width:45%" /></td>
-<td style="text-align:center;width:50%"><img id="picture3" style="vertical-align:middle;width:45%" /></td>
+<td colspan="3"><br /></td>
 </tr>
 <tr>
-<td id="guess2" style="text-align:center;width:50%;font-family:verdana;font-size:10px;color:#FFFFFF;font-weight:bold"></td>
-<td id="guess3" style="text-align:center;width:50%;font-family:verdana;font-size:10px;color:#FFFFFF;font-weight:bold"></td>
+<td style="text-align:center;width:33%"><img id="picture1" style="vertical-align:middle;width:50%" /></td>
+<td style="text-align:center;width:33%"><img id="picture2" style="vertical-align:middle;width:50%" /></td>
+<td style="text-align:center;width:33%"><img id="picture3" style="vertical-align:middle;width:50%" /></td>
 </tr>
 <tr>
-<td style="text-align:center;width:50%"><img id="picture4" style="vertical-align:middle;width:45%" /></td>
-<td style="text-align:center;width:50%"><img id="picture5" style="vertical-align:middle;width:45%" /></td>
-</tr>
-<tr>
-<td id="guess4" style="text-align:center;width:50%;font-family:verdana;font-size:10px;color:#FFFFFF;font-weight:bold"></td>
-<td id="guess5" style="text-align:center;width:50%;font-family:verdana;font-size:10px;color:#FFFFFF;font-weight:bold"></td>
+<td id="guess1" style="text-align:center;width:33%;font-family:verdana;font-size:10px;color:#FFFFFF;"></td>
+<td id="guess2" style="text-align:center;width:33%;font-family:verdana;font-size:10px;color:#FFFFFF;"></td>
+<td id="guess3" style="text-align:center;width:33%;font-family:verdana;font-size:10px;color:#FFFFFF;"></td>
 </tr>
 </table>
 </div>
 </div>
+</center>
 </div>
