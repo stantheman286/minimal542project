@@ -131,6 +131,7 @@ AbstractApp.prototype.getElement = function(originalID) {
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////// Sub Class /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+var timer;
 
 function MyApp(divobj,uuid,parent){
   this.myuuid = uuid;
@@ -150,12 +151,11 @@ MyApp.prototype.start = function() {
   //
 
   //set some attributes for the app div
-  this.div.style.backgroundColor = "#336699";
+  this.div.style.backgroundColor = "#666666";
   
   // Define variables
   var this_app = this;
   var this_uuid = this.myuuid;
-  var timer = undefined;
   var auto;
   var sample_rate;
   var refresh_rate;
@@ -163,6 +163,9 @@ MyApp.prototype.start = function() {
   this.getUIhtml(function(e,h){
     this_app.div.innerHTML = h;
     this_app.getAllElements();
+
+    // Initial app refresh
+    this_app.update();
 
     // Auto-capture
     this_app.auto_set.addEventListener('click',function(){
@@ -185,9 +188,7 @@ MyApp.prototype.start = function() {
       this_app.sendEvent('forward', {cmd: 'auto_capture', uuid: this_uuid, auto: auto, sample_rate: this_app.sample_rate.value}, function(e, r) {
         if (e) {
           console.log('App error (Auto-capture): ' + e);
-        } else {
-          this_app.update();
-        }
+        } else {}
       });
 
     });
@@ -219,10 +220,12 @@ MyApp.prototype.start = function() {
      // Change interval when 'Set' clicked
     this_app.refresh_set_button.addEventListener('click', function() {
     
-      if(typeof(timer) !== 'undefined') {
+      // Clear any existing timers
+      if (timer !== null) {
         clearInterval(timer);
+        timer = null;
       }
-      
+
       refresh_rate = this_app.refresh_rate.value;
 
       // Set default rate if out of range 
@@ -230,7 +233,7 @@ MyApp.prototype.start = function() {
         refresh_rate = '1';
       }
 
-      timer = setInterval(function(){
+      timer = setInterval(function() {
         this_app.update();
       }, refresh_rate*1000);  // ms
     });
@@ -256,20 +259,13 @@ MyApp.prototype.update = function(){
     } else {
       var info = JSON.parse(r);
 
-      // Display up to the last 6 images in app
+      // Display up to the last 6 images and guesses in app
       for(var i = 0; i < 6; i++) {
         if (info[i]) {
           this_app.picture[i].src = '/?action=retrieveBig&id=' + info[info.length-(i+1)].id; // Oldest first order, start from end
+          this_app.guess[i].innerHTML= (JSON.parse(info[info.length-(i+1)].meta)).guess;
         }
       }
-
-      //ms: testing
-      if (info[0]) console.log((JSON.parse(info[info.length-1].meta)).guess);
-      if (info[1]) console.log((JSON.parse(info[info.length-2].meta)).guess);
-      if (info[2]) console.log((JSON.parse(info[info.length-3].meta)).guess);
-      if (info[3]) console.log((JSON.parse(info[info.length-4].meta)).guess);
-      if (info[4]) console.log((JSON.parse(info[info.length-5].meta)).guess);
-      if (info[5]) console.log((JSON.parse(info[info.length-6].meta)).guess);
     }
   });
 };
@@ -292,10 +288,12 @@ MyApp.prototype.getAllElements = function(){
   this.take_picture_button = this.getElement("take_picture_button");
   this.refresh_button = this.getElement("refresh_button");
 
-  // Picture modules
+  // Picture and guess modules
   this.picture = new Array();
+  this.guess = new Array();
   for (var i = 0; i < 6; i++) {
     this.picture[i] = this.getElement("picture" + i);
+    this.guess[i] = this.getElement("guess" + i);
   }
 };
 

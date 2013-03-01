@@ -47,6 +47,8 @@ var COMPOST = 2;
 var CAPTURE = 0;
 var LIVE = 1;
 
+var timer = null;
+
 //some parameters.  they should go in a config file later:
 var app_code_path  = 'app.js';
 var html_code_path = 'app.html';
@@ -260,18 +262,19 @@ Device.prototype.getPicture = function(fields,response) {
 
 // Setup auto-capture settings
 Device.prototype.auto_capture = function(fields,response) {
-  "use strict";
-  
+  "use strict"
+
   var this_device = this;
-  var timer = undefined;
 
   // Turn on auto-capture 
   if (fields.auto === 'on') {
 
     // Clear any existing timers
-    if(typeof(timer) !== 'undefined') {
+    if (timer !== null) {
       clearInterval(timer);
+      timer = null;
     }
+
     // Set up timer to read temperature at given sample rate
     timer = setInterval(function() {
      
@@ -285,9 +288,8 @@ Device.prototype.auto_capture = function(fields,response) {
   else {
 
     // Clear any existing timers
-    if(typeof(timer) !== 'undefined') {
-      clearInterval(timer);
-    }
+    clearInterval(timer);
+    timer = null;
 
   }
   
