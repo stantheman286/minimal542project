@@ -191,39 +191,38 @@ Device.prototype.getPicture = function(fields,response) {
   var myData;
   var filename  = 'image.jpg';
   var guess     = 'TRASH';
+  var type;
   var meta;
   var options;
   var req;
 
-  // Generate a random number to pick a file and guess
-  var rand1 = Math.floor((Math.random()*8)+1);
-  var rand2 = Math.floor((Math.random()*3));
+//ms: testing  // Generate a random number to pick a file and guess
+//ms: testing  var rand1 = Math.floor((Math.random()*8)+1);
+//ms: testing  var rand2 = Math.floor((Math.random()*3));
+//ms: testing
+//ms: testing  switch(rand1)
+//ms: testing  {
+//ms: testing    case 1: filename = './images/apple.jpg'; break;
+//ms: testing    case 2: filename = './images/orange.jpg'; break;
+//ms: testing    case 3: filename = './images/watermelon.jpg'; break;
+//ms: testing    case 4: filename = './images/banana.jpg'; break;
+//ms: testing    case 5: filename = './images/tomato.jpg'; break;
+//ms: testing    case 6: filename = './images/strawberry.jpg'; break;
+//ms: testing    case 7: filename = './images/durian.jpg'; break;
+//ms: testing    case 8: filename = './images/rambutan.jpg'; break;
+//ms: testing    default: filename = './images/apple.jpg'; break;
+//ms: testing  }
 
-  switch(rand1)
+  
+  console.log('Snapping picture and guessing...');
+  type = scraptcha.takePicture(filename, CAPTURE);
+  switch(scraptcha.detectScrap(filename))
   {
-    case 1: filename = './images/apple.jpg'; break;
-    case 2: filename = './images/orange.jpg'; break;
-    case 3: filename = './images/watermelon.jpg'; break;
-    case 4: filename = './images/banana.jpg'; break;
-    case 5: filename = './images/tomato.jpg'; break;
-    case 6: filename = './images/strawberry.jpg'; break;
-    case 7: filename = './images/durian.jpg'; break;
-    case 8: filename = './images/rambutan.jpg'; break;
-    default: filename = './images/apple.jpg'; break;
-  }
-
-//ms: testing  scraptcha.takePicture(filename, CAPTURE);
-  console.log('Snapping picture...');
-
-  switch(rand2)
-  {
-    case 0: guess = 'TRASH'; break;
-    case 1: guess = 'RECYCLING'; break;
-    case 2: guess = 'COMPOST'; break;
+    case TRASH:     guess = 'TRASH'; break;
+    case RECYCLING: guess = 'RECYCLING'; break;
+    case COMPOST:   guess = 'COMPOST'; break;
     default: guess = 'TRASH'; break;
   }
-
-  console.log('Making guess...');
 
   // Create meta information
   meta = JSON.stringify({
