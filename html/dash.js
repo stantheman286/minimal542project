@@ -180,6 +180,8 @@ Dashboard.prototype.buildAppWindow = function(window_title){
       app_title_div.appendChild(min_btn);
       app_title_div.appendChild(title_txt);
     outer_div.appendChild(app_element);
+    
+  jQuery('.app_container').resizable();
   
   return {app: app_element, close: close_btn, window: outer_div};
 };
