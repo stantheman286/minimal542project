@@ -191,7 +191,6 @@ Device.prototype.getPicture = function(fields,response) {
   var myData;
   var filename  = 'image.jpg';
   var guess     = 'TRASH';
-  var type;
   var meta;
   var options;
   var req;
@@ -215,7 +214,7 @@ Device.prototype.getPicture = function(fields,response) {
 
   
   console.log('Snapping picture and guessing...');
-  type = scraptcha.takePicture(filename, CAPTURE);
+  scraptcha.takePicture(filename, CAPTURE);
   switch(scraptcha.detectScrap(filename))
   {
     case TRASH:     guess = 'TRASH'; break;
