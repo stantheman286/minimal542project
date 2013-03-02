@@ -6,13 +6,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 var timer;
 
-function MyApp(divobj,uuid,parent){
+function MyApp(divobj,uuid,dash){
   this.myuuid = uuid;
   if (!divobj) {
     throw "First argument must be a valid html object";
   }
   this.div = divobj;
-  this.dash = parent;
+  this.dash = dash;
 }
 MyApp.prototype = Object.create(AbstractApp.prototype);
 
@@ -29,9 +29,9 @@ MyApp.prototype.start = function() {
   // Define variables
   var this_app = this;
   var this_uuid = this.myuuid;
-  var auto;
-  var sample_rate;
-  var refresh_rate;
+//  var auto;
+//  var sample_rate;
+//  var refresh_rate;
 
   this.getUIhtml(function(e,h){
     this_app.div.innerHTML = h;
@@ -41,30 +41,30 @@ MyApp.prototype.start = function() {
     this_app.update();
 
     // Auto-capture
-    this_app.auto_set.addEventListener('click',function(){
-  
-      // Obtain the auto-capture settings from app 
-      if (this_app.auto_on.checked) {
-        auto = 'on';
-      } else {
-        auto = 'off';
-      }
-      
-      sample_rate = this_app.sample_rate.value;
-
-      // Set default rate if out of range 
-      if (sample_rate < '1' || sample_rate > '9') {
-        sample_rate = '1';
-      }
-      
-      // Tell device to take a picture
-      this_app.sendEvent('forward', {cmd: 'auto_capture', uuid: this_uuid, auto: auto, sample_rate: this_app.sample_rate.value}, function(e, r) {
-        if (e) {
-          console.log('App error (Auto-capture): ' + e);
-        } else {}
-      });
-
-    });
+//    this_app.auto_set.addEventListener('click',function(){
+//  
+//      // Obtain the auto-capture settings from app 
+//      if (this_app.auto_on.checked) {
+//        auto = 'on';
+//      } else {
+//        auto = 'off';
+//      }
+//      
+//      sample_rate = this_app.sample_rate.value;
+//
+//      // Set default rate if out of range 
+//      if (sample_rate < '1' || sample_rate > '9') {
+//        sample_rate = '1';
+//      }
+//      
+//      // Tell device to take a picture
+//      this_app.sendEvent('forward', {cmd: 'auto_capture', uuid: this_uuid, auto: auto, sample_rate: this_app.sample_rate.value}, function(e, r) {
+//        if (e) {
+//          console.log('App error (Auto-capture): ' + e);
+//        } else {}
+//      });
+//
+//    });
 
     // Take a picture and update when 'Take Picture' clicked
     this_app.take_picture_button.addEventListener('click',function(){
@@ -90,26 +90,26 @@ MyApp.prototype.start = function() {
       this_app.update();
     },10000);
 
-     // Change interval when 'Set' clicked
-    this_app.refresh_set_button.addEventListener('click', function() {
-    
-      // Clear any existing timers
-      if (timer !== null) {
-        clearInterval(timer);
-        timer = null;
-      }
-
-      refresh_rate = this_app.refresh_rate.value;
-
-      // Set default rate if out of range 
-      if (refresh_rate < '1' || refresh_rate > '10') {
-        refresh_rate = '1';
-      }
-
-      timer = setInterval(function() {
-        this_app.update();
-      }, refresh_rate*1000);  // ms
-    });
+//     // Change interval when 'Set' clicked
+//    this_app.refresh_set_button.addEventListener('click', function() {
+//    
+//      // Clear any existing timers
+//      if (timer !== null) {
+//        clearInterval(timer);
+//        timer = null;
+//      }
+//
+//      refresh_rate = this_app.refresh_rate.value;
+//
+//      // Set default rate if out of range 
+//      if (refresh_rate < '1' || refresh_rate > '10') {
+//        refresh_rate = '1';
+//      }
+//
+//      timer = setInterval(function() {
+//        this_app.update();
+//      }, refresh_rate*1000);  // ms
+//    });
 
   });
 
@@ -136,7 +136,8 @@ MyApp.prototype.update = function(){
       for(var i = 0; i < 4; i++) {
         if (info[i]) {
           this_app.picture[i].src = '/?action=retrieveBig&id=' + info[info.length-(i+1)].id; // Oldest first order, start from end
-          this_app.guess[i].innerHTML= (JSON.parse(info[info.length-(i+1)].meta)).guess;
+          if (i == 0) this_app.guess[i].innerHTML= 'I think this is ' + (JSON.parse(info[info.length-(i+1)].meta)).guess + '.';
+          else this_app.guess[i].innerHTML= (JSON.parse(info[info.length-(i+1)].meta)).guess;
         }
       }
     }
@@ -148,14 +149,14 @@ MyApp.prototype.getAllElements = function(){
   "use strict";
   
   // Auto-capture
-  this.auto_on = this.getElement("auto_on");
-  this.auto_off = this.getElement("auto_off");
-  this.sample_rate = this.getElement("sample_rate");
-  this.auto_set = this.getElement("auto_set");
+//  this.auto_on = this.getElement("auto_on");
+//  this.auto_off = this.getElement("auto_off");
+//  this.sample_rate = this.getElement("sample_rate");
+//  this.auto_set = this.getElement("auto_set");
 
   // Auto-refresh
-  this.refresh_rate = this.getElement("refresh_rate");
-  this.refresh_set_button = this.getElement("refresh_set_button");
+//  this.refresh_rate = this.getElement("refresh_rate");
+//  this.refresh_set_button = this.getElement("refresh_set_button");
   
   // Take picture
   this.take_picture_button = this.getElement("take_picture_button");

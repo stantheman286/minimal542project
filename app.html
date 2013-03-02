@@ -1,35 +1,39 @@
-<div id="container" style="text-align:center;background-color:#FF0000;height:400px">
+<div id="container" style="text-align:center;background-color:#C2D1E3;height:380px">
 <center>
-<div id="overall_align" style="margin: 0px 10px 0px 10px">
-<div id="spacer1" style="height:10px">&nbsp;</div>
-<div id="auto_capture_container" style="text-align:center;background-color:#333333;font-family:verdana;font-size:11px;color:#FFFFFF">
+<div id="overall_align" style="position:relative;width:280px;height:380px">
+<div id="spacer1" style="height:10px"></div>
+<!--<div id="auto_capture_container" style="text-align:center;background-color:#5B84B4;font-family:verdana;font-size:11px;color:#FFFFFF;">
 Auto Capture: 
 <input type="radio" name="temp" id="auto_on">On&nbsp;
 <input type="radio" name="temp" id="auto_off" checked>Off&nbsp;
 <br />
  Sample rate (every 'n' sec): 
 <input type="text" id="sample_rate" size="3" maxlength="1" value="1" />
-<button id="auto_set" style="background-color:#666699;font-family:verdana;font-size:10px;color:#FFFFFF;font-weight:bold">Set</button>
+<button id="auto_set" style="background-color:#38577C;font-family:verdana;font-size:10px;color:#FFFFFF;font-weight:bold">Set</button>
 </div>
-<div id="auto_refresh_container" style="margin-bottom:10px;text-align:center;background-color:#333333;font-family:verdana;font-size:11px;color:#FFFFFF">
+<div id="auto_refresh_container" style="margin-bottom:0px;text-align:center;background-color:#5B84B4;font-family:verdana;font-size:11px;color:#FFFFFF">
  Refresh Rate (every 'n' sec): 
 <input type="text" id="refresh_rate" size="3" maxlength="2" value="1" />
-<button id="refresh_set_button" style="background-color:#666699;font-family:verdana;font-size:10px;color:#FFFFFF;font-weight:bold">Set</button>
+<button id="refresh_set_button" style="background-color:#38577C;font-family:verdana;font-size:10px;color:#FFFFFF;font-weight:bold">Set</button>
+</div>-->
+<div id="tab_container" style="position:absolute;top:10px;left:0px;right:10px;">
+<div id="capture_tab" style="display:table-cell;vertical-align:middle;background-color:#5B84B4;font-family:verdana;font-size:14px;color:#FFFFFF;font-weight:bold;width:140px;height:30px">Capture</div>
+<div id="gaming_tab" style="display:table-cell;vertical-align:middle;background-color:#C2D1E3;font-family:verdana;font-size:14px;color:#38577C;font-weight:bold;width:140px;height:30px">Gaming</div>
 </div>
-<div id="spacer2" style="height:10px">&nbsp;</div>
-<div id="picture_guess_container" style="margin: 0px 0px 0px 0px;text-align:center;background-color:#333333;">
-<button id="take_picture_button" style="background-color:#666699;font-family:verdana;font-size:10px;color:#FFFFFF;font-weight:bold">Take Picture</button>&nbsp;
-<button id="refresh_button" style="background-color:#666699;font-family:verdana;font-size:10px;color:#FFFFFF;font-weight:bold">Refresh</button>
-<div id="spacer3" style="height:10px">&nbsp;</div>
-<table style="padding:2px;spacing:5px">
+<div id="picture_guess_container" style="position:absolute;bottom:10px;top:40px;text-align:center;background-color:#5B84B4;">
+<div id="spacer2" style="height:5px"></div>
+<table style="padding:2px;spacing:5px;width:280px">
 <tr>
-<td colspan="3" style="text-align:center;"><img id="picture0" style="vertical-align:middle;width:60%" /></td>
+<td colspan="3" style="text-align:center;"><img id="picture0" style="vertical-align:middle;width:80%" /></td>
+</tr>
+<tr>
+<td colspan="3" id="table_spacer" style="height:5px"></td>
 </tr>
 <tr>
 <td colspan="3" id="guess0" style="text-align:center;font-family:verdana;font-size:16px;color:#FFFFFF;font-weight:bold"></td>
 </tr>
 <tr>
-<td colspan="3"><br /></td>
+<td colspan="3" style="text-align:center;font-family:verdana;font-size:12px;color:#FFFFFF;font-weight:bold;height:32px">Previous guesses:</td>
 </tr>
 <tr>
 <td style="text-align:center;width:33%"><img id="picture1" style="vertical-align:middle;width:50%" /></td>
@@ -42,6 +46,9 @@ Auto Capture:
 <td id="guess3" style="text-align:center;width:33%;font-family:verdana;font-size:10px;color:#FFFFFF;"></td>
 </tr>
 </table>
+<div id="spacer4" style="height:5px"></div>
+<button id="take_picture_button" style="background-color:#38577C;font-family:verdana;font-size:10px;color:#FFFFFF;font-weight:bold">Take Picture</button>&nbsp;
+<button id="refresh_button" style="background-color:#38577C;font-family:verdana;font-size:10px;color:#FFFFFF;font-weight:bold">Refresh</button>
 </div>
 </div>
 </center>
