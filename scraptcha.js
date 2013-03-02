@@ -88,7 +88,8 @@ function Device(listen_port) {
   this.addEventHandler('getPicture',this.getPicture); 
   
   //manually attach to manager.
-  this.manager_IP = 'localhost';
+  this.manager_IP = '192.168.1.20';
+//  this.manager_IP = 'bioturk.ee.washington.edu';
   this.manager_port = 9090;
   this.my_IP = OS.networkInterfaces().wlan0[0].address;
   this.sendAction('addDevice',
@@ -191,6 +192,7 @@ Device.prototype.getPicture = function(fields,response) {
   var myData;
   var filename  = 'image.jpg';
   var guess     = 'TRASH';
+  var delay;
   var meta;
   var options;
   var req;
@@ -221,6 +223,22 @@ Device.prototype.getPicture = function(fields,response) {
     case RECYCLING: guess = 'RECYCLING'; break;
     case COMPOST:   guess = 'COMPOST'; break;
     default: guess = 'TRASH'; break;
+  }
+
+  // Set LED delay
+  delay = 500;
+
+  // Prepare IO on the Pi
+  scraptcha.setup_io();
+
+  // Enable LED bar and reset values
+  scraptcha.ledBarEnable();
+
+  // Set LEDs
+  if (guess === 'TRASH') {
+    scraptcha.ledBlockSet(ANODE1, GREEN, delay);
+  } else {
+    scraptcha.ledBlockSet(ANODE1, RED, delay);
   }
 
   // Create meta information
