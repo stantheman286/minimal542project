@@ -34,6 +34,13 @@ MyApp.prototype.start = function() {
     this_app.div.innerHTML = h;
     this_app.getAllElements();
 
+    // Start LCD
+    this_app.sendEvent('forward', {cmd:'startLCD', uuid:this_uuid}, function(e, r) {
+      if (e) {
+        console.log('App error (Take picture): ' + e);
+      }
+    });
+
     // Initial app refresh
     this_app.update();
 

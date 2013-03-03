@@ -50,7 +50,9 @@ var COMPOST = 2;
 var CAPTURE = 0;
 var LIVE = 1;
 
+// Global variables
 var timer = null;
+var fd;
 
 //some parameters.  they should go in a config file later:
 var app_code_path  = 'app.js';
@@ -85,6 +87,7 @@ function Device(listen_port) {
   
   //implementation specific events
   this.addEventHandler('auto_capture',this.auto_capture); 
+  this.addEventHandler('startLCD',this.startLCD); 
   this.addEventHandler('getPicture',this.getPicture); 
   
   //manually attach to manager.
@@ -185,6 +188,53 @@ Device.prototype.getHTMLEvent = function(event_data, response) {
 };
 
 ////////////////////IMPLEMENTATION SPECIFIC COMMANDS////////////////////////////
+Device.prototype.startLCD = function(fields,response) {
+  "use strict";
+
+  var options;
+  var req;
+
+  // Start LCD and store descriptor
+  fd = scraptcha.lcdStart();
+  console.log('FD: ' + fd);
+
+  // Set up options for POST request
+  options = {
+    hostname: this.manager_IP,
+    port: this.manager_port,
+    path: '/?action=store&uuid=' + this.uuid,
+    method: 'POST'
+  };
+
+  // Create request
+  req = http.request(options, function(res) {
+    console.log('STATUS: ' + res.statusCode);
+    console.log('HEADERS: ' + JSON.stringify(res.headers));
+    res.setEncoding('utf8');
+    res.on('data', function (chunk) {
+      console.log('BODY: ' + chunk);
+    });
+
+    // If from POST request, wait to finish before completing
+    if (response) {
+      // Send status and header information
+      response.writeHead(res.statusCode, res.headers);
+      response.end();
+    }
+
+  });
+
+  // Report any errors
+  req.on('error', function(e) {
+    console.log('Problem with request: ' + e.message);
+  });
+  
+  // Send descriptor to DB for use with later captures
+  req.write(JSON.stringify(fd));
+  req.end();
+
+};
+
 Device.prototype.getPicture = function(fields,response) {
   "use strict";
 
@@ -196,6 +246,9 @@ Device.prototype.getPicture = function(fields,response) {
   var meta;
   var options;
   var req;
+
+  // Grab descriptor for LCD from DB
+  //ms: TODO
 
 //ms: testing  // Generate a random number to pick a file and guess
 //ms: testing  var rand1 = Math.floor((Math.random()*8)+1);
@@ -214,9 +267,11 @@ Device.prototype.getPicture = function(fields,response) {
 //ms: testing    default: filename = './images/apple.jpg'; break;
 //ms: testing  }
 
-  
-  console.log('Snapping picture and guessing...');
+ 
+  // Grab picture from webcam and make guess
   scraptcha.takePicture(filename, CAPTURE);
+  console.log('Snapping picture and guessing...');
+  
   switch(scraptcha.detectScrap(filename))
   {
     case TRASH:     guess = 'TRASH'; break;
@@ -224,6 +279,12 @@ Device.prototype.getPicture = function(fields,response) {
     case COMPOST:   guess = 'COMPOST'; break;
     default: guess = 'TRASH'; break;
   }
+
+  // Print message to LCD
+  scraptcha.lcdClear(fd); // Clean off display, reset to home position
+  scraptcha.lcdPrint(fd, 'I think this is ');
+  scraptcha.lcdSetCursor(fd, 0, 1); // Guess won't fit on 1 row 
+  scraptcha.lcdPrint(fd, guess + '.');
 
   // Set LED delay
   delay = 500;
