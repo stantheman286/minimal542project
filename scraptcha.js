@@ -53,6 +53,7 @@ var LIVE = 1;
 // Global variables
 var timer = null;
 var fd;
+var guess = null;
 
 //some parameters.  they should go in a config file later:
 var app_code_path  = 'app.js';
@@ -87,7 +88,7 @@ function Device(listen_port) {
   
   //implementation specific events
   this.addEventHandler('auto_capture',this.auto_capture); 
-  this.addEventHandler('startLCD',this.startLCD); 
+  this.addEventHandler('startup',this.startup); 
   this.addEventHandler('getPicture',this.getPicture); 
   
   //manually attach to manager.
@@ -188,15 +189,52 @@ Device.prototype.getHTMLEvent = function(event_data, response) {
 };
 
 ////////////////////IMPLEMENTATION SPECIFIC COMMANDS////////////////////////////
-Device.prototype.startLCD = function(fields,response) {
+Device.prototype.startup = function(fields,response) {
   "use strict";
 
+  var delay = 1;  // LED delay
   var options;
   var req;
 
   // Start LCD and store descriptor
   fd = scraptcha.lcdStart();
   console.log('FD: ' + fd);
+
+  // Clear LCD display
+  scraptcha.lcdClear(fd);
+  scraptcha.lcdPrint(fd, 'Status: READY');
+  
+  // Prepare IO on the Pi
+  scraptcha.setup_io();
+
+  // Enable LED bar and reset values
+  scraptcha.ledBarEnable();
+
+  //ms: testing
+  setInterval(function() {
+    switch (guess) {
+      case 'TRASH': 
+        scraptcha.ledBlockSet(ANODE0, GREEN, delay);
+        scraptcha.ledBlockSet(ANODE1, RED, delay);
+        scraptcha.ledBlockSet(ANODE2, RED, delay);
+        break;
+      case 'RECYCLING': 
+        scraptcha.ledBlockSet(ANODE0, RED, delay);
+        scraptcha.ledBlockSet(ANODE1, GREEN, delay);
+        scraptcha.ledBlockSet(ANODE2, RED, delay);
+        break;
+      case 'COMPOST': 
+        scraptcha.ledBlockSet(ANODE0, RED, delay);
+        scraptcha.ledBlockSet(ANODE1, RED, delay);
+        scraptcha.ledBlockSet(ANODE2, GREEN, delay);
+        break;
+      default: 
+        scraptcha.ledBlockSet(ANODE0, RED, delay);
+        scraptcha.ledBlockSet(ANODE1, RED, delay);
+        scraptcha.ledBlockSet(ANODE2, RED, delay);
+        break;
+    }
+  }, (1)); // Rate in ms
 
   // Set up options for POST request
   options = {
@@ -241,8 +279,6 @@ Device.prototype.getPicture = function(fields,response) {
   // Declare variables
   var myData;
   var filename  = 'image.jpg';
-  var guess     = 'TRASH';
-  var delay;
   var meta;
   var options;
   var req;
@@ -269,9 +305,12 @@ Device.prototype.getPicture = function(fields,response) {
 
  
   // Grab picture from webcam and make guess
+  scraptcha.ledBarEnable(); // Clears LED bar while capturing/guessing (otherwise hangs on one anode)
+  scraptcha.lcdClear(fd); // Clean off display, reset to home position
+  scraptcha.lcdPrint(fd, 'Status: BUSY');
   scraptcha.takePicture(filename, CAPTURE);
   console.log('Snapping picture and guessing...');
-  
+
   switch(scraptcha.detectScrap(filename))
   {
     case TRASH:     guess = 'TRASH'; break;
@@ -282,25 +321,11 @@ Device.prototype.getPicture = function(fields,response) {
 
   // Print message to LCD
   scraptcha.lcdClear(fd); // Clean off display, reset to home position
-  scraptcha.lcdPrint(fd, 'I think this is ');
+  scraptcha.lcdPrint(fd, 'Status: READY');
   scraptcha.lcdSetCursor(fd, 0, 1); // Guess won't fit on 1 row 
-  scraptcha.lcdPrint(fd, guess + '.');
+  scraptcha.lcdPrint(fd, 'Guess: ' + guess);
 
-  // Set LED delay
-  delay = 500;
-
-  // Prepare IO on the Pi
-  scraptcha.setup_io();
-
-  // Enable LED bar and reset values
-  scraptcha.ledBarEnable();
-
-  // Set LEDs
-  if (guess === 'TRASH') {
-    scraptcha.ledBlockSet(ANODE1, GREEN, delay);
-  } else {
-    scraptcha.ledBlockSet(ANODE1, RED, delay);
-  }
+  // Set LEDs (part of startup)
 
   // Create meta information
   meta = JSON.stringify({

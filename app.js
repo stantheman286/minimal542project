@@ -34,8 +34,8 @@ MyApp.prototype.start = function() {
     this_app.div.innerHTML = h;
     this_app.getAllElements();
 
-    // Start LCD
-    this_app.sendEvent('forward', {cmd:'startLCD', uuid:this_uuid}, function(e, r) {
+    // Start LCD and clear displays
+    this_app.sendEvent('forward', {cmd:'startup', uuid:this_uuid}, function(e, r) {
       if (e) {
         console.log('App error (Take picture): ' + e);
       }
