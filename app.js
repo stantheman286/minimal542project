@@ -19,7 +19,7 @@ MyApp.prototype = Object.create(AbstractApp.prototype);
 //overwrite start and update
 MyApp.prototype.start = function() {
   "use strict";
-  //
+  // 
   //Starts app and loads gui.
   //
 
