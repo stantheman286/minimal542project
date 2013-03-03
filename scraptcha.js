@@ -210,7 +210,7 @@ Device.prototype.startup = function(fields,response) {
   // Enable LED bar and reset values
   scraptcha.ledBarEnable();
 
-  //ms: testing
+  // Set up LED display loop for anodes
   setInterval(function() {
     switch (guess) {
       case 'TRASH': 
