@@ -19,7 +19,7 @@ var __DEBUG_LEVEL__ = 15;
 ///////////////////////////////////// MANAGER //////////////////////////////////
 function Manager(listen_port){
   "use strict";
-  HEL.call(this,'action',listen_port);
+  HEL.call(this,'action',listen_port,true);
   this.port = listen_port;
   this.devices = {};  //a hash table of known devices keyed by uuid
   this.insert_seq = 0;

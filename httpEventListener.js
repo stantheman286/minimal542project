@@ -6,8 +6,9 @@ var fs   = require('fs');
 exports.HttpEventListener = HttpEventListener;
 //html base directory for all html files
 var default_html_base = './html';
+var auth_page_path = 'auth.html';
 
-function HttpEventListener(event_field_name, listen_port) {
+function HttpEventListener(event_field_name, listen_port, auth) {
   "use strict";
   //
   // A basic http event listener class.
@@ -22,10 +23,18 @@ function HttpEventListener(event_field_name, listen_port) {
   //            or 'action' for the manager
   // listen_port: the http port that it should listen on.
   //             (binds to all addresses)
+  // auth: boolean - if true use user authentication before sending webpages
+  //                 from the html_base folder.
   var this_device = this;
   this.events = [];
   this.event_field_name = event_field_name;
   this.html_base = default_html_base;
+  this.auth = auth;
+  if (this.auth) {
+    this.users = {}; //{sessionkey:user_name}
+  } else {
+    this.users = null; //evals to false
+  }
   
   http.createServer(function(req,res) {
     this_device.manageHTTPRequest(req,res);
@@ -40,7 +49,6 @@ HttpEventListener.prototype.manageHTTPRequest = function(request,response) {
   //request: http request
   //response: http response
     
-  //parse request
   var post_data = new Buffer('');
   var parsedURL = url.parse(request.url,true);
   var req_args = parsedURL.query;
@@ -62,8 +70,14 @@ HttpEventListener.prototype.manageHTTPRequest = function(request,response) {
       console.log('bad req:' + request.url);
     //if its none of the above its probably a file
     } else {
-      //replace .. with . in pathname to prevent exploit)
-      var path = html_base + parsedURL.pathname.replace(/\.+/g,'.');
+      var path;
+      if (that.auth && !that.users[parseCookie(request.headers.cookie).auth]) {
+        path = auth_page_path;
+      } else {
+        //replace .. with . in pathname to prevent exploit)
+        path = html_base + parsedURL.pathname.replace(/\.+/g,'.');
+      }
+      
       console.log('getting file: ' + path );
       fs.readFile(path,'utf8', function(err,data) {
         if (err) {
@@ -74,21 +88,31 @@ HttpEventListener.prototype.manageHTTPRequest = function(request,response) {
           response.end(data);
         }
       });
-      
-      
     }
-    
   };
   
   if (request.method === 'POST') {
     request.on('data',function(d){
       post_data = Buffer.concat([post_data,d]);
     });
-    request.on('end', handle_resp);
+    
+    //if we post to the auth file.
+    if (that.auth &&
+          parsedURL.pathname.search( auth_page_path.match(/[\w,\d,\.]+$/))>=0) {
+      //TODO: read user name and password
+      //TODO: respond with cookie
+      //TODO: add to session list
+      request.on('end', function (){
+        response.writeHead(503, {'Content-Type': 'text/plain'});
+        response.end('login not implemented yet.  postdata: ' + post_data);
+        
+      });
+    } else {
+      request.on('end', handle_resp);
+    }
   } else {
     handle_resp();
   }
-  
   
 };
 HttpEventListener.prototype.addEventHandler = function(command_name, handler) {
@@ -130,4 +154,22 @@ function getMIMEType(path) {
     return 'text/plain';
   }
   
+}
+
+function parseCookie(cookie){
+  "use strict";
+  //
+  //parses cookie into object
+  //
+  // cookie: string - the cookie
+  //
+  if(!cookie) { return {}; }
+  console.log("parsing cookie:" + cookie);
+  var obj = {};
+  var vars = cookie.split(';').map(function(x){return x.trim().split('=');});
+  var pairs = vars.forEach(function(o){
+    if (o.length<2) { return; }
+    obj[o[0]] = o[1];
+  });
+  return obj;
 }
