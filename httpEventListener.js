@@ -54,6 +54,8 @@ HttpEventListener.prototype.manageHTTPRequest = function(request,response) {
   var req_args = parsedURL.query;
   var eventfn = this.events[req_args[this.event_field_name]];
   var html_base = this.html_base;
+  var redirect_code = '<html><head>' +
+    '<meta http-equiv="refresh" content="0;url=X" /></head></html>';
   
   var that = this;
   var handle_resp = function(){
@@ -70,12 +72,10 @@ HttpEventListener.prototype.manageHTTPRequest = function(request,response) {
       console.log('bad req:' + request.url);
     //if its none of the above its probably a file
     } else {
-      var path;
-      if (that.auth && !that.users[parseCookie(request.headers.cookie).auth]) {
-        path = auth_page_path;
-      } else {
         //replace .. with . in pathname to prevent exploit)
-        path = html_base + parsedURL.pathname.replace(/\.+/g,'.');
+      var path = html_base + parsedURL.pathname.replace(/\.+/g,'.');
+      if (that.auth && !that.users[parseCookie(request.headers.cookie).tok]) {
+        path = auth_page_path;
       }
       
       console.log('getting file: ' + path );
@@ -103,9 +103,12 @@ HttpEventListener.prototype.manageHTTPRequest = function(request,response) {
       //TODO: respond with cookie
       //TODO: add to session list
       request.on('end', function (){
-        response.writeHead(503, {'Content-Type': 'text/plain'});
-        response.end('login not implemented yet.  postdata: ' + post_data);
-        
+        //TODO generate token
+        var token = 'xyz';
+        that.users[token] = 'place_holder'; //TODO: extract name.
+        response.setHeader("Set-Cookie","tok="+ token);
+        response.writeHead(200, {'Content-Type': 'text/html'});
+        response.end( redirect_code.replace('X',parsedURL.pathname));
       });
     } else {
       request.on('end', handle_resp);
