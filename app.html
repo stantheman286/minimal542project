@@ -1,40 +1,40 @@
-<div id="container" style="text-align:center;background-color:#C2D1E3;height:380px">
+<div id="container">
 <center>
-<div id="overall_align" style="position:relative;width:280px;height:380px">
-<div id="spacer1" style="height:10px"></div>
-<div id="tab_container" style="position:absolute;top:10px;left:0px;right:10px;">
-<div id="capture_tab" style="display:table-cell;vertical-align:middle;background-color:#5B84B4;font-family:verdana;font-size:14px;color:#FFFFFF;font-weight:bold;width:140px;height:30px">Capture</div>
-<div id="gaming_tab" style="display:table-cell;vertical-align:middle;background-color:#C2D1E3;font-family:verdana;font-size:14px;color:#38577C;font-weight:bold;width:140px;height:30px">Gaming</div>
+<div id="overall_align">
+<div id="spacer1" class="spacer_big"></div>
+<div id="tab_container">
+<div id="capture_tab">Capture</div>
+<div id="gaming_tab">Gaming</div>
 </div>
-<div id="picture_guess_container" style="position:absolute;bottom:10px;top:40px;text-align:center;background-color:#5B84B4;">
-<div id="spacer2" style="height:5px"></div>
-<table style="padding:2px;spacing:5px;width:280px">
+<div id="picture_guess_container">
+<div id="spacer2" class="spacer_small"></div>
+<table id="guess_table">
 <tr>
-<td colspan="3" style="text-align:center;"><img id="picture0" style="vertical-align:middle;width:80%" /></td>
+<td colspan="3"><img id="picture0" /></td>
 </tr>
 <tr>
-<td colspan="3" id="table_spacer" style="height:5px"></td>
+<td colspan="3" id="table_spacer" class="spacer_small"></td>
 </tr>
 <tr>
-<td colspan="3" id="guess0" style="text-align:center;font-family:verdana;font-size:16px;color:#FFFFFF;font-weight:bold"></td>
+<td colspan="3" id="guess0"></td>
 </tr>
 <tr>
-<td colspan="3" style="text-align:center;font-family:verdana;font-size:12px;color:#FFFFFF;font-weight:bold;height:32px">Previous guesses:</td>
+<td id="prev_guess" colspan="3">Previous guesses:</td>
 </tr>
 <tr>
-<td style="text-align:center;width:33%"><img id="picture1" style="vertical-align:middle;width:50%" /></td>
-<td style="text-align:center;width:33%"><img id="picture2" style="vertical-align:middle;width:50%" /></td>
-<td style="text-align:center;width:33%"><img id="picture3" style="vertical-align:middle;width:50%" /></td>
+<td class="prev_pic_container"><img id="picture1" class="prev_pic" /></td>
+<td class="prev_pic_container"><img id="picture2" class="prev_pic" /></td>
+<td class="prev_pic_container"><img id="picture3" class="prev_pic" /></td>
 </tr>
 <tr>
-<td id="guess1" style="text-align:center;width:33%;font-family:verdana;font-size:10px;color:#FFFFFF;"></td>
-<td id="guess2" style="text-align:center;width:33%;font-family:verdana;font-size:10px;color:#FFFFFF;"></td>
-<td id="guess3" style="text-align:center;width:33%;font-family:verdana;font-size:10px;color:#FFFFFF;"></td>
+<td id="guess1" class="guess"></td>
+<td id="guess2" class="guess"></td>
+<td id="guess3" class="guess"></td>
 </tr>
 </table>
-<div id="spacer4" style="height:5px"></div>
-<button id="take_picture_button" style="background-color:#38577C;font-family:verdana;font-size:10px;color:#FFFFFF;font-weight:bold">Take Picture</button>&nbsp;
-<button id="refresh_button" style="background-color:#38577C;font-family:verdana;font-size:10px;color:#FFFFFF;font-weight:bold">Refresh</button>
+<div id="spacer4" class="spacer_small"></div>
+<button id="take_picture_button" class="buttons">Take Picture</button>&nbsp;
+<button id="refresh_button" class="buttons">Refresh</button>
 </div>
 </div>
 </center>

@@ -34,6 +34,35 @@ MyApp.prototype.start = function() {
     this_app.div.innerHTML = h;
     this_app.getAllElements();
 
+    // Initialize the tabs
+    //this_app.initTabs();
+
+    // Generate style information
+
+    // IDs (make anonymous)
+    var styles = '#id' + this_uuid + 'container { background-color: #C2D1E3; height: 380px }\n';
+    styles += '#id' + this_uuid + 'overall_align { position: relative; width: 280px; height: 380px }\n';
+    styles += '#id' + this_uuid + 'tab_container { position: absolute; top: 10px; left: 0px; right: 10px }\n';
+    styles += '#id' + this_uuid + 'capture_tab { display: table-cell; vertical-align: middle; background-color: #5B84B4; font-family: verdana; font-size: 14px; color: #FFFFFF; font-weight: bold; width: 140px; height: 30px }\n';
+    styles += '#id' + this_uuid + 'gaming_tab { display: table-cell; vertical-align: middle; background-color: #C2D1E3; font-family: verdana; font-size: 14px; color: #38577C; font-weight: bold; width: 140px; height: 30px }\n';
+    styles += '#id' + this_uuid + 'picture_guess_container { position: absolute; bottom: 10px; top: 40px; text-align: center; background-color: #5B84B4 }\n';
+    styles += '#id' + this_uuid + 'guess_table { padding: 2px; spacing: 5px; width: 280px }\n';
+    styles += '#id' + this_uuid + 'picture0 { vertical-align: middle; width:80% }\n';
+    styles += '#id' + this_uuid + 'guess0 { font-family: verdana; font-size: 16px; color:#FFFFFF; font-weight: bold }\n';
+    styles += '#id' + this_uuid + 'prev_guess { font-family: verdana; font-size: 12px; color:#FFFFFF; font-weight: bold; height: 32px }\n';
+    
+    // Classes (not anonymous)
+    styles += '.spacer_small { height: 5px }\n';
+    styles += '.spacer_big { height: 10px }\n';
+    styles += '.prev_pic_container { text-align: center }\n';
+    styles += '.prev_pic { vertical-align: middle; width: 50% }\n';
+    styles += '.guess { text-align: center; font-family: verdana; font-size: 10px; color: #FFFFFF }\n';
+    styles += '.buttons { background-color: #38577C; font-family: verdana; font-size: 10px; color: #FFFFFF; font-weight: bold }\n';
+
+    // Set style tag in HTML
+    console.log(styles);
+    this_app.appendStyle(styles);
+
     // Start LCD and clear displays
     this_app.sendEvent('forward', {cmd:'startup', uuid:this_uuid}, function(e, r) {
       if (e) {
@@ -117,6 +146,79 @@ MyApp.prototype.getAllElements = function(){
     this.guess[i] = this.getElement("guess" + i);
   }
 };
+
+MyApp.prototype.initTabs = function() {
+
+  // Grab the tab links and content divs from the page
+  var tabListItems = this.getElement("tabs").childNodes;
+  for ( var i = 0; i < tabListItems.length; i++ ) {
+    if ( tabListItems[i].nodeName == "LI" ) {
+      var tabLink = this_app.getFirstChildWithTagName( tabListItems[i], 'A' );
+      var id = this_app.getHash( tabLink.getAttribute('href') );
+      tabLinks[id] = tabLink;
+      contentDivs[id] = this.getElement(id);
+    }
+  }
+
+  // Assign onclick events to the tab links, and
+  // highlight the first tab
+  var i = 0;
+
+  for ( var id in tabLinks ) {
+    tabLinks[id].onclick = this_app.this_app.showTab;
+    tabLinks[id].onfocus = function() { this.blur() };
+    if ( i == 0 ) tabLinks[id].className = 'selected';
+    i++;
+  }
+
+  // Hide all content divs except the first
+  var i = 0;
+
+  for ( var id in contentDivs ) {
+    if ( i != 0 ) contentDivs[id].className = 'tabContent hide';
+    i++;
+  }
+}
+
+MyApp.prototype.showTab = function() {
+  var selectedId = this_app.getHash( this.getAttribute('href') );
+
+  // Highlight the selected tab, and dim all others.
+  // Also show the selected content div, and hide all others.
+  for ( var id in contentDivs ) {
+    if ( id == selectedId ) {
+      tabLinks[id].className = 'selected';
+      contentDivs[id].className = 'tabContent';
+    } else {
+      tabLinks[id].className = '';
+      contentDivs[id].className = 'tabContent hide';
+    }
+  }
+
+  // Stop the browser following the link
+  return false;
+}
+
+MyApp.prototype.getFirstChildWithTagName = function(element, tagName) {
+  for ( var i = 0; i < element.childNodes.length; i++ ) {
+    if ( element.childNodes[i].nodeName == tagName ) return element.childNodes[i];
+  }
+}
+
+MyApp.prototype.getHash = function(url) {
+  var hashPos = url.lastIndexOf ( '#' );
+  return url.substring( hashPos + 1 );
+}
+
+MyApp.prototype.appendStyle = function(styles) {
+  var css = document.createElement('style');
+  css.type = 'text/css';
+
+  if (css.styleSheet) css.styleSheet.cssText = styles;
+  else css.appendChild(document.createTextNode(styles));
+
+  document.getElementsByTagName("head")[0].appendChild(css);
+}
 
 //spec says app needs to be named App
 var App = MyApp;
