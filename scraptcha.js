@@ -54,6 +54,7 @@ var LIVE = 1;
 var timer = null;
 var fd;
 var guess = null;
+var testing = true;
 
 //some parameters.  they should go in a config file later:
 var app_code_path  = 'app.js';
@@ -92,8 +93,9 @@ function Device(listen_port) {
   this.addEventHandler('getPicture',this.getPicture); 
   
   //manually attach to manager.
-  this.manager_IP = '192.168.1.20';
-//  this.manager_IP = 'bioturk.ee.washington.edu';
+//  this.manager_IP = 'localhost';
+//  this.manager_IP = '192.168.1.20';
+  this.manager_IP = 'bioturk.ee.washington.edu';
   this.manager_port = 9090;
   this.my_IP = OS.networkInterfaces().wlan0[0].address;
   this.sendAction('addDevice',
@@ -196,45 +198,49 @@ Device.prototype.startup = function(fields,response) {
   var options;
   var req;
 
-  // Start LCD and store descriptor
-  fd = scraptcha.lcdStart();
-  console.log('FD: ' + fd);
+  if (!testing) {
 
-  // Clear LCD display
-  scraptcha.lcdClear(fd);
-  scraptcha.lcdPrint(fd, 'Status: READY');
+    // Start LCD and store descriptor
+    fd = scraptcha.lcdStart();
+    console.log('FD: ' + fd);
+
+    // Clear LCD display
+    scraptcha.lcdClear(fd);
+    scraptcha.lcdPrint(fd, 'Status: READY');
+    
+    // Prepare IO on the Pi
+    scraptcha.setup_io();
+
+    // Enable LED bar and reset values
+    scraptcha.ledBarEnable();
+
+    // Set up LED display loop for anodes
+    setInterval(function() {
+      switch (guess) {
+        case 'TRASH': 
+          scraptcha.ledBlockSet(ANODE0, GREEN, delay);
+          scraptcha.ledBlockSet(ANODE1, RED, delay);
+          scraptcha.ledBlockSet(ANODE2, RED, delay);
+          break;
+        case 'RECYCLING': 
+          scraptcha.ledBlockSet(ANODE0, RED, delay);
+          scraptcha.ledBlockSet(ANODE1, GREEN, delay);
+          scraptcha.ledBlockSet(ANODE2, RED, delay);
+          break;
+        case 'COMPOST': 
+          scraptcha.ledBlockSet(ANODE0, RED, delay);
+          scraptcha.ledBlockSet(ANODE1, RED, delay);
+          scraptcha.ledBlockSet(ANODE2, GREEN, delay);
+          break;
+        default: 
+          scraptcha.ledBlockSet(ANODE0, RED, delay);
+          scraptcha.ledBlockSet(ANODE1, RED, delay);
+          scraptcha.ledBlockSet(ANODE2, RED, delay);
+          break;
+      }
+    }, (1)); // Rate in ms
   
-  // Prepare IO on the Pi
-  scraptcha.setup_io();
-
-  // Enable LED bar and reset values
-  scraptcha.ledBarEnable();
-
-  // Set up LED display loop for anodes
-  setInterval(function() {
-    switch (guess) {
-      case 'TRASH': 
-        scraptcha.ledBlockSet(ANODE0, GREEN, delay);
-        scraptcha.ledBlockSet(ANODE1, RED, delay);
-        scraptcha.ledBlockSet(ANODE2, RED, delay);
-        break;
-      case 'RECYCLING': 
-        scraptcha.ledBlockSet(ANODE0, RED, delay);
-        scraptcha.ledBlockSet(ANODE1, GREEN, delay);
-        scraptcha.ledBlockSet(ANODE2, RED, delay);
-        break;
-      case 'COMPOST': 
-        scraptcha.ledBlockSet(ANODE0, RED, delay);
-        scraptcha.ledBlockSet(ANODE1, RED, delay);
-        scraptcha.ledBlockSet(ANODE2, GREEN, delay);
-        break;
-      default: 
-        scraptcha.ledBlockSet(ANODE0, RED, delay);
-        scraptcha.ledBlockSet(ANODE1, RED, delay);
-        scraptcha.ledBlockSet(ANODE2, RED, delay);
-        break;
-    }
-  }, (1)); // Rate in ms
+  }
 
   // Set up options for POST request
   options = {
@@ -268,7 +274,7 @@ Device.prototype.startup = function(fields,response) {
   });
   
   // Send descriptor to DB for use with later captures
-  req.write(JSON.stringify(fd));
+  if (!testing) req.write(JSON.stringify(fd));
   req.end();
 
 };
@@ -283,49 +289,57 @@ Device.prototype.getPicture = function(fields,response) {
   var options;
   var req;
 
-  // Grab descriptor for LCD from DB
-  //ms: TODO
+  if (testing) {
 
-//ms: testing  // Generate a random number to pick a file and guess
-//ms: testing  var rand1 = Math.floor((Math.random()*8)+1);
-//ms: testing  var rand2 = Math.floor((Math.random()*3));
-//ms: testing
-//ms: testing  switch(rand1)
-//ms: testing  {
-//ms: testing    case 1: filename = './images/apple.jpg'; break;
-//ms: testing    case 2: filename = './images/orange.jpg'; break;
-//ms: testing    case 3: filename = './images/watermelon.jpg'; break;
-//ms: testing    case 4: filename = './images/banana.jpg'; break;
-//ms: testing    case 5: filename = './images/tomato.jpg'; break;
-//ms: testing    case 6: filename = './images/strawberry.jpg'; break;
-//ms: testing    case 7: filename = './images/durian.jpg'; break;
-//ms: testing    case 8: filename = './images/rambutan.jpg'; break;
-//ms: testing    default: filename = './images/apple.jpg'; break;
-//ms: testing  }
+    // Generate a random number to pick a file and guess
+    var rand1 = Math.floor((Math.random()*8)+1);
+    var rand2 = Math.floor((Math.random()*3));
+  
+    switch(rand1)
+    {
+      case 1: filename = './images/apple.jpg'; break;
+      case 2: filename = './images/orange.jpg'; break;
+      case 3: filename = './images/watermelon.jpg'; break;
+      case 4: filename = './images/banana.jpg'; break;
+      case 5: filename = './images/tomato.jpg'; break;
+      case 6: filename = './images/strawberry.jpg'; break;
+      case 7: filename = './images/durian.jpg'; break;
+      case 8: filename = './images/rambutan.jpg'; break;
+      default: filename = './images/apple.jpg'; break;
+    }
+    
+    switch(rand2)
+    {
+      case TRASH:     guess = 'TRASH'; break;
+      case RECYCLING: guess = 'RECYCLING'; break;
+      case COMPOST:   guess = 'COMPOST'; break;
+      default: guess = 'TRASH'; break;
+    }
 
- 
-  // Grab picture from webcam and make guess
-  scraptcha.ledBarEnable(); // Clears LED bar while capturing/guessing (otherwise hangs on one anode)
-  scraptcha.lcdClear(fd); // Clean off display, reset to home position
-  scraptcha.lcdPrint(fd, 'Status: BUSY');
-  scraptcha.takePicture(filename, CAPTURE);
-  console.log('Snapping picture and guessing...');
+  } else {
 
-  switch(scraptcha.detectScrap(filename))
-  {
-    case TRASH:     guess = 'TRASH'; break;
-    case RECYCLING: guess = 'RECYCLING'; break;
-    case COMPOST:   guess = 'COMPOST'; break;
-    default: guess = 'TRASH'; break;
+    // Grab picture from webcam and make guess
+    scraptcha.ledBarEnable(); // Clears LED bar while capturing/guessing (otherwise hangs on one anode)
+    scraptcha.lcdClear(fd); // Clean off display, reset to home position
+    scraptcha.lcdPrint(fd, 'Status: BUSY');
+    scraptcha.takePicture(filename, CAPTURE);
+    console.log('Snapping picture and guessing...');
+
+    switch(scraptcha.detectScrap(filename))
+    {
+      case TRASH:     guess = 'TRASH'; break;
+      case RECYCLING: guess = 'RECYCLING'; break;
+      case COMPOST:   guess = 'COMPOST'; break;
+      default: guess = 'TRASH'; break;
+    }
+
+    // Print message to LCD
+    scraptcha.lcdClear(fd); // Clean off display, reset to home position
+    scraptcha.lcdPrint(fd, 'Status: READY');
+    scraptcha.lcdSetCursor(fd, 0, 1); // Guess won't fit on 1 row 
+    scraptcha.lcdPrint(fd, 'Guess: ' + guess);
+
   }
-
-  // Print message to LCD
-  scraptcha.lcdClear(fd); // Clean off display, reset to home position
-  scraptcha.lcdPrint(fd, 'Status: READY');
-  scraptcha.lcdSetCursor(fd, 0, 1); // Guess won't fit on 1 row 
-  scraptcha.lcdPrint(fd, 'Guess: ' + guess);
-
-  // Set LEDs (part of startup)
 
   // Create meta information
   meta = JSON.stringify({

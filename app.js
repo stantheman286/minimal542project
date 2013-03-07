@@ -34,17 +34,12 @@ MyApp.prototype.start = function() {
     this_app.div.innerHTML = h;
     this_app.getAllElements();
 
-    // Initialize the tabs
-    //this_app.initTabs();
-
     // Generate style information
 
     // IDs (make anonymous)
     var styles = '#id' + this_uuid + 'container { background-color: #C2D1E3; height: 380px }\n';
     styles += '#id' + this_uuid + 'overall_align { position: relative; width: 280px; height: 380px }\n';
-    styles += '#id' + this_uuid + 'tab_container { position: absolute; top: 10px; left: 0px; right: 10px }\n';
-    styles += '#id' + this_uuid + 'capture_tab { display: table-cell; vertical-align: middle; background-color: #5B84B4; font-family: verdana; font-size: 14px; color: #FFFFFF; font-weight: bold; width: 140px; height: 30px }\n';
-    styles += '#id' + this_uuid + 'gaming_tab { display: table-cell; vertical-align: middle; background-color: #C2D1E3; font-family: verdana; font-size: 14px; color: #38577C; font-weight: bold; width: 140px; height: 30px }\n';
+    styles += '#id' + this_uuid + 'tab_container { position: absolute; top: 0px; left: -167px; right: 0px }\n';
     styles += '#id' + this_uuid + 'picture_guess_container { position: absolute; bottom: 10px; top: 40px; text-align: center; background-color: #5B84B4 }\n';
     styles += '#id' + this_uuid + 'guess_table { padding: 2px; spacing: 5px; width: 280px }\n';
     styles += '#id' + this_uuid + 'picture0 { vertical-align: middle; width:80% }\n';
@@ -59,9 +54,24 @@ MyApp.prototype.start = function() {
     styles += '.guess { text-align: center; font-family: verdana; font-size: 10px; color: #FFFFFF }\n';
     styles += '.buttons { background-color: #38577C; font-family: verdana; font-size: 10px; color: #FFFFFF; font-weight: bold }\n';
 
+    // Tab-related
+    styles += 'ul#id' + this_uuid + 'tabs { list-style-type: none; }\n';
+    styles += 'ul#id' + this_uuid + 'tabs li { display: inline }\n';
+    styles += 'ul#id' + this_uuid + 'tabs li a { padding: 7px; background-color: #C2D1E3; font-family: verdana; font-size: 14px; color: #38577C; font-weight: bold; text-decoration: none; }\n';
+    styles += 'ul#id' + this_uuid + 'tabs li a:hover { background-color: #000066; color: #FFFFFF }\n';
+    styles += 'ul#id' + this_uuid + 'tabs li a.selected { background-color: #5B84B4; font-family: verdana; font-size: 14px; color: #FFFFFF; font-weight: bold; }\n';
+    styles += 'div.tabContent { }\n';
+    styles += 'div.tabContent.hide { display: none; }\n';
+
     // Set style tag in HTML
-    console.log(styles);
     this_app.appendStyle(styles);
+
+    // Set up correct tab references
+    this_app.capture_tab.href = '#id' + this_uuid + 'capture';
+    this_app.gaming_tab.href = '#id' + this_uuid + 'gaming';
+
+    // Initialize the tabs
+    this_app.initTabs();
 
     // Start LCD and clear displays
     this_app.sendEvent('forward', {cmd:'startup', uuid:this_uuid}, function(e, r) {
@@ -145,18 +155,29 @@ MyApp.prototype.getAllElements = function(){
     this.picture[i] = this.getElement("picture" + i);
     this.guess[i] = this.getElement("guess" + i);
   }
+
+  // Tabs
+  this.capture_tab = this.getElement("capture_tab");
+  this.gaming_tab = this.getElement("gaming_tab");
+
 };
 
 MyApp.prototype.initTabs = function() {
 
+  var this_app = this;
+  var this_uuid = this.myuuid;
+
   // Grab the tab links and content divs from the page
-  var tabListItems = this.getElement("tabs").childNodes;
+  var tabListItems = this_app.getElement("tabs").childNodes;
+  var tabLinks = new Array();
+  var contentDivs = new Array();
+
   for ( var i = 0; i < tabListItems.length; i++ ) {
     if ( tabListItems[i].nodeName == "LI" ) {
       var tabLink = this_app.getFirstChildWithTagName( tabListItems[i], 'A' );
       var id = this_app.getHash( tabLink.getAttribute('href') );
       tabLinks[id] = tabLink;
-      contentDivs[id] = this.getElement(id);
+      contentDivs[id] = document.getElementById(id);  // Don't use helper function
     }
   }
 
@@ -165,9 +186,33 @@ MyApp.prototype.initTabs = function() {
   var i = 0;
 
   for ( var id in tabLinks ) {
-    tabLinks[id].onclick = this_app.this_app.showTab;
+
+    // Show the correct tab when clicked
+    tabLinks[id].onclick = function() { 
+    
+      var selectedId = this_app.getHash( this.getAttribute('href') );
+
+      // Highlight the selected tab, and dim all others.
+      // Also show the selected content div, and hide all others.
+      for ( var id in contentDivs ) {
+        if ( id == selectedId ) {
+          tabLinks[id].className = 'selected';
+          contentDivs[id].className = 'tabContent';
+        } else {
+          tabLinks[id].className = '';
+          contentDivs[id].className = 'tabContent hide';
+        }
+      }
+
+      // Stop the browser following the link
+      return false;
+
+    };
+
     tabLinks[id].onfocus = function() { this.blur() };
-    if ( i == 0 ) tabLinks[id].className = 'selected';
+    if ( i == 0 ) {
+      tabLinks[id].className = 'selected';
+    }
     i++;
   }
 
@@ -175,28 +220,11 @@ MyApp.prototype.initTabs = function() {
   var i = 0;
 
   for ( var id in contentDivs ) {
-    if ( i != 0 ) contentDivs[id].className = 'tabContent hide';
-    i++;
-  }
-}
-
-MyApp.prototype.showTab = function() {
-  var selectedId = this_app.getHash( this.getAttribute('href') );
-
-  // Highlight the selected tab, and dim all others.
-  // Also show the selected content div, and hide all others.
-  for ( var id in contentDivs ) {
-    if ( id == selectedId ) {
-      tabLinks[id].className = 'selected';
-      contentDivs[id].className = 'tabContent';
-    } else {
-      tabLinks[id].className = '';
+    if ( i != 0 ) {
       contentDivs[id].className = 'tabContent hide';
     }
+    i++;
   }
-
-  // Stop the browser following the link
-  return false;
 }
 
 MyApp.prototype.getFirstChildWithTagName = function(element, tagName) {
