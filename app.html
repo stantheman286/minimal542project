@@ -6,20 +6,21 @@
 <ul id="tabs">
   <li><a id="capture_tab" href="#capture">Capture</a></li>
   <li><a id="gaming_tab" href="#gaming">Gaming</a></li>
+  <li><a id="about_tab" href="#about">About</a></li>
 </ul>
 </div>
 <div class="tabContent" id="capture">
 <div id="picture_guess_container">
 <div id="spacer2" class="spacer_small"></div>
-<table id="guess_table">
+<table id="guess_gaming_table">
 <tr>
-<td colspan="3"><img id="picture0" /></td>
+<td colspan="3"><img id="picture0" class="big_pic" /></td>
 </tr>
 <tr>
 <td colspan="3" id="table_spacer" class="spacer_small"></td>
 </tr>
 <tr>
-<td colspan="3" id="guess0"></td>
+<td colspan="3" id="guess0" class="big_guess"></td>
 </tr>
 <tr>
 <td id="prev_guess" colspan="3">Previous guesses:</td>
@@ -41,6 +42,36 @@
 </div>
 </div>
 <div class="tabContent" id="gaming">
+<div id="picture_guess_container">
+<div id="spacer5" class="spacer_small"></div>
+<table id="guess_gaming_table">
+<tr>
+<td><img id="picture4" class="big_pic" /></td>
+</tr>
+<tr>
+<td id="table_spacer2" class="spacer_small"></td>
+</tr>
+<tr>
+<td id="guess4" class="small_guess"></td>
+</tr>
+<tr>
+<td id="choice_question">What is this?</td>
+</tr>
+<tr>
+<td class="choice_container">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="radio" name="choices" id="trash_radio" checked>Trash<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="radio" name="choices" id="recycling_radio">Recycling<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="radio" name="choices" id="compost_radio">Compost<br />
+</td>
+</tr>
+</table>
+<div id="spacer6" class="spacer_small"></div>
+<button id="skip_button" class="buttons">Skip</button>&nbsp;
+<button id="submit_answer_button" class="buttons">Submit</button>
+<div id="spacer7" class="spacer_small"></div>
+</div>
+</div>
+<div class="tabContent" id="about">
 <div id="picture_guess_container">
 <div style="width:280px; text-align: center">
 <br />
