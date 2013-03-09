@@ -25,12 +25,12 @@
 <tr>
 <td id="prev_guess" colspan="3">Previous guesses:</td>
 </tr>
-<tr>
+<tr class="prev_container">
 <td class="prev_pic_container"><img id="picture1" class="prev_pic" /></td>
 <td class="prev_pic_container"><img id="picture2" class="prev_pic" /></td>
 <td class="prev_pic_container"><img id="picture3" class="prev_pic" /></td>
 </tr>
-<tr>
+<tr class="prev_container">
 <td id="guess1" class="guess"></td>
 <td id="guess2" class="guess"></td>
 <td id="guess3" class="guess"></td>
@@ -55,13 +55,19 @@
 <td id="guess4" class="small_guess"></td>
 </tr>
 <tr>
-<td id="choice_question">What is this?</td>
+<td>
+<div id="choice_question" class="choices">
+What do you think it is?
+</div>
+</td>
 </tr>
 <tr>
-<td class="choice_container">
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="radio" name="choices" id="trash_radio" checked>Trash<br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="radio" name="choices" id="recycling_radio">Recycling<br />
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="radio" name="choices" id="compost_radio">Compost<br />
+<td>
+<div id="choice_container" class="choices">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="radio" name="options" id="trash_radio" checked>Trash<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="radio" name="options" id="recycling_radio">Recycling<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="radio" name="options" id="compost_radio">Compost<br />
+</div>
 </td>
 </tr>
 </table>
