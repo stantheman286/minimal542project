@@ -8,6 +8,8 @@
 // Global variables
 window.timer;
 window.delete_table = new Array();
+// Number of deleted items, used to reconcile database entries
+window.delete_count = 0;
 window.image_store = new String();
 window.idx = -1;
 
@@ -34,6 +36,10 @@ MyApp.prototype.start = function() {
   // Define variables
   var this_app = this;
   var this_uuid = this.myuuid;
+  
+  var http_get = new XMLHttpRequest();
+  var http_post = new XMLHttpRequest();
+     
 
   this.getUIhtml(function(e,h){
     this_app.div.innerHTML = h;
@@ -120,12 +126,10 @@ MyApp.prototype.start = function() {
     // Update verified image and get a new one if user clicks submit button 
     this_app.submit_answer_button.addEventListener('click', function() {
    
+      console.log('SUBMIT --> ' + window.idx);
       // Only send requests if valid index (not sorry image)
       if (window.idx > -1) {
 
-        var http_get = new XMLHttpRequest();
-        var http_post = new XMLHttpRequest();
-     
         // Send GET request for image to update its meta data
         http_get.open("GET","/?action=retrieveBig&id=" + window.image_store[window.idx].id ,true);
         http_get.responseType = 'arraybuffer';
@@ -135,8 +139,6 @@ MyApp.prototype.start = function() {
 
               // Get the image data
               var uInt8Array = new Uint8Array(this.response); // this.response == uInt8Array.buffer
-              console.log(i);
-              console.log(uInt8Array);
 
               // "Delete" the old image 
               delete_table[image_store[i].id] = 'yes';
@@ -150,10 +152,6 @@ MyApp.prototype.start = function() {
                 image_store[i].meta = JSON.stringify({ guess: 'COMPOST', verified: 'yes' });
               }
   
-              console.log('1 > ' + i);
-              console.log('2 > ' + image_store[i].meta);
-              console.log('3 > ' + delete_table[image_store[i].id]);
-  
               // POST data with updated meta information back to server
               http_post.open("POST","/?action=storeBig&uuid=" + this_uuid + '&meta=' + image_store[i].meta ,true);
               http_post.onload = function() {};
@@ -163,20 +161,21 @@ MyApp.prototype.start = function() {
         })(window.idx, window.image_store, window.delete_table);
         http_get.send();
 
-        console.log(window.delete_table);
-
         // Go to next image and refresh screen
-        window.idx++;
-        this_app.getRandomUnverifiedPic();
+      console.log('SUBMIT2 --> ' + window.idx);
+      this_app.getRandomUnverifiedPic(window.idx+1);
+      console.log('SUBMIT3 --> ' + window.idx);
       } else {
         console.log('Sorry message should be displayed now');
       }
+
     });
 
     // Get a new picture if user clicks the skip button
     this_app.skip_button.addEventListener('click', function() {
-      window.idx++;  // Skip to next image
-      this_app.getRandomUnverifiedPic();
+      console.log('SKIP --> ' + window.idx);
+//      window.idx++;  // Skip to next image
+      this_app.getRandomUnverifiedPic(window.idx+1);
     });
 
     // Auto-refresh app every 10 seconds
@@ -255,7 +254,7 @@ MyApp.prototype.uniquify = function(preID, originalID) {
   return preID + 'id' + this.myuuid + originalID
 }
 
-MyApp.prototype.getRandomUnverifiedPic = function() {
+MyApp.prototype.getRandomUnverifiedPic = function(idx) {
 
   var this_app = this;
   var this_uuid = this.myuuid;
@@ -272,7 +271,6 @@ MyApp.prototype.getRandomUnverifiedPic = function() {
 //  while (!done) {
 
   // TODO: randomize?
- 
   // No image chunk stored or out of images, get a new chunk
   if (window.image_store.length === 0) {
     
@@ -283,9 +281,12 @@ MyApp.prototype.getRandomUnverifiedPic = function() {
       } else {
         // Store an image chunk and set the index
         window.image_store = JSON.parse(r);
-        window.idx = 0;
+        idx = 0;
       }
     });   
+
+    // Reset delete count
+    window.delete_count = 0;
 
     // Load IDs into the deleted items table
     for (i = 0; i < window.image_store.length; i++) {
@@ -294,30 +295,39 @@ MyApp.prototype.getRandomUnverifiedPic = function() {
         // Not in the array, add it
         if (typeof window.delete_table[window.image_store[i].id] === 'undefined') {
           window.delete_table[window.image_store[i].id] = 'no';
+        } else if (window.delete_table[window.image_store[i].id] === 'yes') {
+          window.delete_count++;
         }
       }
     }
-  } 
+  }
+
+  window.delete_count = 0;  // TODO temp
+  console.log('Delete Count: ' + window.delete_count);
   
   // Images left, go through them
   // TODO: once run out of image chunk, get more (and not same ones over and over)
-  if (window.idx < window.image_store.length) {
+  if (idx < (window.image_store.length - window.delete_count - 4)) {
     
     // Run through all the images in the chunk (oldest first)
-    for(; window.idx < (window.image_store.length - 4); window.idx++) { // Skip the latest 4 to prevent deleting images from capture screen
+    for(; idx < (window.image_store.length - window.delete_count - 4); idx++) { // Skip the latest 4 to prevent deleting images from capture screen
+
+// TODO: add delete count to these idxs?
 
       // Image is valid, unverified and not deleted, post it, set flag, delete and exit
-      if (window.image_store[window.idx] && (JSON.parse(window.image_store[window.idx].meta)).verified === 'no' && (window.delete_table[window.image_store[window.idx].id] === 'no')) {
-        this_app.picture[4].src = '/?action=retrieveBig&id=' + window.image_store[window.idx].id;
-        this_app.guess[4].innerHTML= 'I think this is ' + (JSON.parse(window.image_store[window.idx].meta)).guess + '.';
+      if (window.image_store[idx] && (JSON.parse(window.image_store[idx].meta)).verified === 'no' && (window.delete_table[window.image_store[idx].id] === 'no')) {
+        this_app.picture[4].src = '/?action=retrieveBig&id=' + window.image_store[idx].id;
+        this_app.guess[4].innerHTML= 'I think this is ' + (JSON.parse(window.image_store[idx].meta)).guess + '.';
 
         // Show the prompt and choices
         this_app.choice_question.className = 'choices';
         this_app.choice_container.className = 'choices';
-        
         // Set flag
         done = true;
-        
+
+        // Only set the global index if find a match
+        window.idx = idx;
+
         break;
       }
     }
@@ -334,9 +344,8 @@ MyApp.prototype.getRandomUnverifiedPic = function() {
 //    }
 
     if (done === false) {
-     
       // Clear out image chunk and reset index to begin guessing again
-      window.image_store = new String();
+// TODO temp      window.image_store = new String();
       window.idx = -1;
 
       // Load static sorry image, clear out guess
@@ -383,7 +392,7 @@ MyApp.prototype.initTabs = function() {
 
       // Refresh gaming screen anytime the tab is clicked
       if (selectedId === this_app.uniquify('', 'gaming')) {
-        this_app.getRandomUnverifiedPic();
+        this_app.getRandomUnverifiedPic(window.idx);
       }
 
       // Highlight the selected tab, and dim all others.
