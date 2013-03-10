@@ -1,7 +1,8 @@
 /*jshint node:true*/
-var http = require('http');
-var url  = require('url');
-var fs   = require('fs');
+var http   = require('http');
+var url    = require('url');
+var fs     = require('fs');
+var crypto = require('crypto');
 
 exports.HttpEventListener = HttpEventListener;
 //html base directory for all html files
@@ -29,7 +30,7 @@ function HttpEventListener(event_field_name, listen_port, auth) {
   this.events = [];
   this.event_field_name = event_field_name;
   this.html_base = default_html_base;
-  this.auth = auth;
+  this.auth = !!auth;
   if (this.auth) {
     this.users = {}; //{sessionkey:user_name}
   } else {
@@ -61,6 +62,10 @@ HttpEventListener.prototype.manageHTTPRequest = function(request,response) {
   var handle_resp = function(){
     req_args['@post_data'] = post_data;
     req_args['@ip'] = request.connection.remoteAddress;
+    req_args['@cookie'] = request.headers.cookie;
+    if (that.auth){
+      req_args['@user'] = that.users[parseCookie(request.headers.cookie).tok];
+    }
     //if its an event
     if (typeof(eventfn) === 'function' ) {
       eventfn(req_args, response);
@@ -91,6 +96,21 @@ HttpEventListener.prototype.manageHTTPRequest = function(request,response) {
     }
   };
   
+  var handle_auth = function(){
+    console.log("auth PD: " + post_data.toString());
+    //TODO: read password hash
+    var token = crypto.randomBytes(96).toString('base64');
+    var post_query_fields = url.parse('?'+post_data.toString(),true).query;
+    console.log("auth PD: " + JSON.stringify(post_query_fields));
+    
+    that.users[token] = post_query_fields.user;
+    response.setHeader("Set-Cookie","tok="+ token);
+    response.writeHead(200, {'Content-Type': 'text/html'});
+    response.end(redirect_code.replace('X','/dash.html'));
+   
+    console.log('authenticated: ' + that.users[token]);
+  };
+  
   if (request.method === 'POST') {
     request.on('data',function(d){
       post_data = Buffer.concat([post_data,d]);
@@ -99,17 +119,7 @@ HttpEventListener.prototype.manageHTTPRequest = function(request,response) {
     //if we post to the auth file.
     if (that.auth &&
           parsedURL.pathname.search( auth_page_path.match(/[\w,\d,\.]+$/))>=0) {
-      //TODO: read user name and password
-      //TODO: respond with cookie
-      //TODO: add to session list
-      request.on('end', function (){
-        //TODO generate token
-        var token = 'xyz';
-        that.users[token] = 'place_holder'; //TODO: extract name.
-        response.setHeader("Set-Cookie","tok="+ token);
-        response.writeHead(200, {'Content-Type': 'text/html'});
-        response.end( redirect_code.replace('X',parsedURL.pathname));
-      });
+      request.on('end', handle_auth);
     } else {
       request.on('end', handle_resp);
     }
@@ -136,7 +146,20 @@ HttpEventListener.prototype.addEventHandler = function(command_name, handler) {
   };
   this.events[command_name] = fn;
 };
-
+HttpEventListener.prototype.lookupUser = function(token){
+  //
+  // Accessor method for user names.
+  // token: base64 string - if the token matches a user returns the username
+  //                        otherwise returns undefined
+  //
+  if (this.users) {
+    return this.users[token];
+  } else {
+    return undefined;
+  }
+  
+};
+HttpEventListener.prototype.parseCookie = parseCookie;
 
 function getMIMEType(path) {
   "use strict";

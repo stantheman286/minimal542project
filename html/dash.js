@@ -18,7 +18,6 @@ function Dashboard(){
   this.devices = null;
   this.manager_hostname = location.hostname;
   this.manager_port = location.port;
-  this.user_name = "";
   
   //get all elements
   this.main_elem = document.getElementById('apps');

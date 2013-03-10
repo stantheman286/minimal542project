@@ -39,6 +39,7 @@ function Manager(listen_port){
   this.addEventHandler('forward',this.forward);
   this.addEventHandler('ping',this.ping);
   this.addEventHandler('addDevice',this.remoteAddDev);
+  this.addEventHandler('whoami',this.whoami);
   
   this.loadDevicelistDB();
   this.setupMulticastListener('224.250.67.238',17768);
@@ -297,6 +298,18 @@ Manager.prototype.forward = function(fields,response) {
     }
     
   }
+};
+Manager.prototype.whoami = function(fields,response){
+  "use strict";
+  //
+  // Event handler for ?action=whoami
+  // just returns 200ok with the currently authenticated username in body
+  // fields: the query fields 
+  // response: the http.ServerResponse object.
+  //
+  
+  response.writeHead(200, {'Content-Type': 'text/plain'});
+  response.end(fields['@user']);  
 };
 
 ////////////////////////////////////////////////////////////////////////////////
