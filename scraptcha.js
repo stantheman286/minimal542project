@@ -93,9 +93,9 @@ function Device(listen_port) {
   this.addEventHandler('getPicture',this.getPicture); 
   
   //manually attach to manager.
-  this.manager_IP = 'localhost';
+//  this.manager_IP = 'localhost';
 //  this.manager_IP = '192.168.1.20';
-//  this.manager_IP = 'bioturk.ee.washington.edu';
+  this.manager_IP = 'bioturk.ee.washington.edu';
   this.manager_port = 9090;
   this.my_IP = OS.networkInterfaces().wlan0[0].address;
   this.sendAction('addDevice',
