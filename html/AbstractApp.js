@@ -93,8 +93,8 @@ AbstractApp.prototype.sendEvent = function(type,args,cb){
   var http = new XMLHttpRequest();
   http.open("GET",path,false);
   http.onreadystatechange=function(){
-    if (http.readyState==4 ) {
-      if (http.status == 200) {
+    if (parseInt(http.readyState,10) === 4 ) {
+      if (parseInt(http.status,10) === 200) {
         cb('', http.responseText);
       } else{
         cb('Error: '+http.status,http.responseText);
