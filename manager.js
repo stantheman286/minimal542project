@@ -1,4 +1,4 @@
-/*jshint node:true*/
+/*jshint node:true latedef:false*/
 var mysql = require('mysql');
 var http  = require('http');
 var HEL   = require('./httpEventListener.js').HttpEventListener;
@@ -34,6 +34,7 @@ function Manager(listen_port){
   this.addEventHandler('storeBig',this.storeData);
   this.addEventHandler('retrieve',this.getData);
   this.addEventHandler('retrieveBig',this.retrieveBig);
+  this.addEventHandler('deleteBig',this.deleteBig);
   this.addEventHandler('listBig',this.getData);
   this.addEventHandler('list',this.getDevList);
   this.addEventHandler('forward',this.forward);
@@ -194,7 +195,7 @@ Manager.prototype.retrieveBig = function(fields,response) {
   q = "SELECT bigdata FROM " + big_table_name + " WHERE epoch = " +
       String(id) + ";";
   
-  console.log("query: "+q);
+  dbg("query: " + q,10);
   this.dbconn.query(q, function(e,r) {
     if(e) {
       response.writeHead(503, {'Content-Type': 'text/plain'});
@@ -311,7 +312,29 @@ Manager.prototype.whoami = function(fields,response){
   response.writeHead(200, {'Content-Type': 'text/plain'});
   response.end(fields['@user']);  
 };
-
+Manager.prototype.deleteBig = function(fields, response) {
+  "use strict";
+  //
+  //Event handler for ?action=dropBig
+  // fields: the query fields
+  // response: the http.ServerResponse object.
+  //
+  var id = parseInt(fields.id,10);  
+  var q = "DELETE FROM " + big_table_name + " WHERE epoch = " +
+            String(id) + ";";
+  
+  dbg("query: " + q,10);
+  
+  this.dbconn.query(q, function(e,r) {
+    if(e) {
+      response.writeHead(503, {'Content-Type': 'text/plain'});
+      response.end('database error: ' + e);
+    } else {
+      response.writeHead(200);
+      response.end();
+    }
+  });  
+};
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// Device Methods ///////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
