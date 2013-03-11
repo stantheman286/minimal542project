@@ -7,11 +7,9 @@
 
 // Global variables
 window.timer;
-window.delete_table = new Array();
-// Number of deleted items, used to reconcile database entries
-window.delete_count = 0;
 window.image_store = new String();
 window.idx = -1;
+window.num_verified_entries = 0;
 
 function MyApp(divobj,uuid,dash){
   this.myuuid = uuid;
@@ -126,45 +124,50 @@ MyApp.prototype.start = function() {
     // Update verified image and get a new one if user clicks submit button 
     this_app.submit_answer_button.addEventListener('click', function() {
    
-      console.log('SUBMIT --> ' + window.idx);
       // Only send requests if valid index (not sorry image)
       if (window.idx > -1) {
 
         // Send GET request for image to update its meta data
         http_get.open("GET","/?action=retrieveBig&id=" + window.image_store[window.idx].id ,true);
         http_get.responseType = 'arraybuffer';
-        http_get.onreadystatechange=(function(i,image_store,delete_table){
+        http_get.onreadystatechange=(function(i,image_store){
           return function(){
             if (http_get.readyState==4 && http_get.status==200) {
 
               // Get the image data
               var uInt8Array = new Uint8Array(this.response); // this.response == uInt8Array.buffer
 
-              // "Delete" the old image 
-              delete_table[image_store[i].id] = 'yes';
-         
-              // Store the correct guess and mark the image as verified
-              if (this_app.trash_radio.checked) {
-                image_store[i].meta = JSON.stringify({ guess: 'TRASH', verified: 'yes' });
-              } else if (this_app.recycling_radio.checked) {
-                image_store[i].meta = JSON.stringify({ guess: 'RECYCLING', verified: 'yes' });
-              } else {
-                image_store[i].meta = JSON.stringify({ guess: 'COMPOST', verified: 'yes' });
-              }
+              // Delete the old image 
+              this_app.sendEvent('deleteBig', {id: image_store[i].id}, function(e, r) {
+                if (e) {
+                  console.log('Delete error: ' + e);
+                } else {
+                  // Store the correct guess and mark the image as verified
+                  if (this_app.trash_radio.checked) {
+                    image_store[i].meta = JSON.stringify({ guess: 'TRASH', verified: 'yes' });
+                  } else if (this_app.recycling_radio.checked) {
+                    image_store[i].meta = JSON.stringify({ guess: 'RECYCLING', verified: 'yes' });
+                  } else {
+                    image_store[i].meta = JSON.stringify({ guess: 'COMPOST', verified: 'yes' });
+                  }
   
-              // POST data with updated meta information back to server
-              http_post.open("POST","/?action=storeBig&uuid=" + this_uuid + '&meta=' + image_store[i].meta ,true);
-              http_post.onload = function() {};
-              http_post.send(uInt8Array);
+                  // POST data with updated meta information back to server
+                  http_post.open("POST","/?action=storeBig&uuid=" + this_uuid + '&meta=' + image_store[i].meta ,true);
+                  http_post.onload = function() {};
+                  http_post.send(uInt8Array);
+                }
+              });
             }
           };
-        })(window.idx, window.image_store, window.delete_table);
+        })(window.idx, window.image_store);
         http_get.send();
 
+        // Increment the verified image count, used for skipping over verified entries
+        window.num_verified_entries++;
+        
         // Go to next image and refresh screen
-      console.log('SUBMIT2 --> ' + window.idx);
-      this_app.getRandomUnverifiedPic(window.idx+1);
-      console.log('SUBMIT3 --> ' + window.idx);
+        this_app.getRandomUnverifiedPic(window.idx+1);
+
       } else {
         console.log('Sorry message should be displayed now');
       }
@@ -173,8 +176,6 @@ MyApp.prototype.start = function() {
 
     // Get a new picture if user clicks the skip button
     this_app.skip_button.addEventListener('click', function() {
-      console.log('SKIP --> ' + window.idx);
-//      window.idx++;  // Skip to next image
       this_app.getRandomUnverifiedPic(window.idx+1);
     });
 
@@ -192,7 +193,8 @@ MyApp.prototype.update = function(){
 
   var this_app = this;
   var this_uuid = this.myuuid;
-  
+  var disp_count;
+
   // Set epoch to past 60 minutes to reduce data intake
   var d = new Date();
   var since = d.getTime() - (60*60*1000);
@@ -204,12 +206,21 @@ MyApp.prototype.update = function(){
     } else {
       var info = JSON.parse(r);
 
-      // Display up to the last 4 images and guesses in app
-      for(var i = 0; i < 4; i++) {
-        if (info[info.length-(i+1)]) {
-          this_app.picture[i].src = '/?action=retrieveBig&id=' + info[info.length-(i+1)].id; // Oldest first order, start from end
-          if (i == 0) this_app.guess[i].innerHTML= 'I think this is ' + (JSON.parse(info[info.length-(i+1)].meta)).guess + '.';
-          else this_app.guess[i].innerHTML= (JSON.parse(info[info.length-(i+1)].meta)).guess;
+      // Reset displayed image count
+      disp_count = 0;
+
+      // Display up to the last 4 new (unverified) images and guesses in app
+      for(var i = 0; i < info.length; i++) {
+        if ((info[info.length-(i+1)]) && ((JSON.parse(info[info.length-(i+1)].meta)).verified === 'no')) {
+          
+          this_app.picture[disp_count].src = '/?action=retrieveBig&id=' + info[info.length-(i+1)].id; // Oldest first order, start from end
+          if (disp_count === 0) this_app.guess[disp_count].innerHTML= 'I think this is ' + (JSON.parse(info[info.length-(i+1)].meta)).guess + '.';
+          else this_app.guess[disp_count].innerHTML= (JSON.parse(info[info.length-(i+1)].meta)).guess;
+          
+          // Only increment for each one displayed
+          if(++disp_count === 4) {
+            break;
+          }
         }
       }
     }
@@ -251,10 +262,11 @@ MyApp.prototype.getAllElements = function(){
 
 // Creates the unique HTML tag names based on UUID
 MyApp.prototype.uniquify = function(preID, originalID) {
-  return preID + 'id' + this.myuuid + originalID
-}
+  return preID + 'id' + this.myuuid + originalID;
+};
 
 MyApp.prototype.getRandomUnverifiedPic = function(idx) {
+  "use strict";
 
   var this_app = this;
   var this_uuid = this.myuuid;
@@ -266,7 +278,7 @@ MyApp.prototype.getRandomUnverifiedPic = function(idx) {
   // Set flag to show haven't found a picture yet
   var done = new Boolean();
   done = false;
-
+  
   // Go through a chunk of images at a time until find a match or run out
 //  while (!done) {
 
@@ -282,40 +294,28 @@ MyApp.prototype.getRandomUnverifiedPic = function(idx) {
         // Store an image chunk and set the index
         window.image_store = JSON.parse(r);
         idx = 0;
-      }
-    });   
-
-    // Reset delete count
-    window.delete_count = 0;
-
-    // Load IDs into the deleted items table
-    for (i = 0; i < window.image_store.length; i++) {
-
-      for (var i = 0, len = window.image_store.length; i < len; i++) {
-        // Not in the array, add it
-        if (typeof window.delete_table[window.image_store[i].id] === 'undefined') {
-          window.delete_table[window.image_store[i].id] = 'no';
-        } else if (window.delete_table[window.image_store[i].id] === 'yes') {
-          window.delete_count++;
+        
+        // Ressurect old verified list (in case app restarted)
+        if(window.num_verified_entries === 0) {
+          for (var i = 0; i < window.image_store.length; i++) {
+            if ((JSON.parse(window.image_store[i].meta)).verified === 'yes') {
+              window.num_verified_entries++;
+            }
+          }
         }
       }
-    }
+    });   
   }
 
-  window.delete_count = 0;  // TODO temp
-  console.log('Delete Count: ' + window.delete_count);
-  
   // Images left, go through them
   // TODO: once run out of image chunk, get more (and not same ones over and over)
-  if (idx < (window.image_store.length - window.delete_count - 4)) {
+  if (idx < (window.image_store.length - 4 - window.num_verified_entries)) {
     
     // Run through all the images in the chunk (oldest first)
-    for(; idx < (window.image_store.length - window.delete_count - 4); idx++) { // Skip the latest 4 to prevent deleting images from capture screen
+    for(; idx < (window.image_store.length - 4 - window.num_verified_entries); idx++) { // Skip the latest 4 to prevent deleting images from capture screen
 
-// TODO: add delete count to these idxs?
-
-      // Image is valid, unverified and not deleted, post it, set flag, delete and exit
-      if (window.image_store[idx] && (JSON.parse(window.image_store[idx].meta)).verified === 'no' && (window.delete_table[window.image_store[idx].id] === 'no')) {
+      // Image is valid and unverified, post it, set flag and exit
+      if (window.image_store[idx] && (JSON.parse(window.image_store[idx].meta)).verified === 'no') {
         this_app.picture[4].src = '/?action=retrieveBig&id=' + window.image_store[idx].id;
         this_app.guess[4].innerHTML= 'I think this is ' + (JSON.parse(window.image_store[idx].meta)).guess + '.';
 
@@ -345,7 +345,7 @@ MyApp.prototype.getRandomUnverifiedPic = function(idx) {
 
     if (done === false) {
       // Clear out image chunk and reset index to begin guessing again
-// TODO temp      window.image_store = new String();
+      window.image_store = new String();
       window.idx = -1;
 
       // Load static sorry image, clear out guess
@@ -361,6 +361,7 @@ MyApp.prototype.getRandomUnverifiedPic = function(idx) {
 }
 
 MyApp.prototype.initTabs = function() {
+  "use strict";
 
   var this_app = this;
   var this_uuid = this.myuuid;
@@ -431,17 +432,20 @@ MyApp.prototype.initTabs = function() {
 }
 
 MyApp.prototype.getFirstChildWithTagName = function(element, tagName) {
+  "use strict";
   for ( var i = 0; i < element.childNodes.length; i++ ) {
     if ( element.childNodes[i].nodeName == tagName ) return element.childNodes[i];
   }
 }
 
 MyApp.prototype.getHash = function(url) {
+  "use strict";
   var hashPos = url.lastIndexOf ( '#' );
   return url.substring( hashPos + 1 );
 }
 
 MyApp.prototype.appendStyle = function(styles) {
+  "use strict";
   var css = document.createElement('style');
   css.type = 'text/css';
 
