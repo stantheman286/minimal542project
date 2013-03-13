@@ -55,6 +55,7 @@ var timer = null;
 var fd;
 var guess = null;
 var testing = true;
+var img_id = 0;
 
 //some parameters.  they should go in a config file later:
 var app_code_path  = 'app.js';
@@ -93,9 +94,9 @@ function Device(listen_port) {
   this.addEventHandler('getPicture',this.getPicture); 
   
   //manually attach to manager.
-//  this.manager_IP = 'localhost';
+  this.manager_IP = 'localhost';
 //  this.manager_IP = '192.168.1.20';
-  this.manager_IP = 'bioturk.ee.washington.edu';
+//  this.manager_IP = 'bioturk.ee.washington.edu';
   this.manager_port = 9090;
   this.my_IP = OS.networkInterfaces().wlan0[0].address;
   this.sendAction('addDevice',
@@ -288,6 +289,7 @@ Device.prototype.getPicture = function(fields,response) {
   var meta;
   var options;
   var req;
+  var d = new Date();
 
   if (testing) {
 
@@ -344,7 +346,8 @@ Device.prototype.getPicture = function(fields,response) {
   // Create meta information
   meta = JSON.stringify({
     guess: guess,
-    verified: 'no'  // All captured images default to not verified
+    verified: 'no',         // All captured images default to not verified
+    img_id: String(d.getTime()*1000 + img_id++) // Unique ID for each image, use date to prevent collisons if device resets
   });
   console.log('GUESS: ' + guess);
 

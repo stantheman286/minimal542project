@@ -7,9 +7,8 @@
 
 // Global variables
 window.timer;
-window.image_store = new String();
+window.image_store = new Array();
 window.idx = -1;
-window.num_verified_entries = 0;
 
 function MyApp(divobj,uuid,dash){
   this.myuuid = uuid;
@@ -37,6 +36,7 @@ MyApp.prototype.start = function() {
   
   var http_get = new XMLHttpRequest();
   var http_post = new XMLHttpRequest();
+  var img_id;
      
 
   this.getUIhtml(function(e,h){
@@ -137,34 +137,41 @@ MyApp.prototype.start = function() {
               // Get the image data
               var uInt8Array = new Uint8Array(this.response); // this.response == uInt8Array.buffer
 
-              // Delete the old image 
-              this_app.sendEvent('deleteBig', {id: image_store[i].id}, function(e, r) {
-                if (e) {
-                  console.log('Delete error: ' + e);
-                } else {
-                  // Store the correct guess and mark the image as verified
-                  if (this_app.trash_radio.checked) {
-                    image_store[i].meta = JSON.stringify({ guess: 'TRASH', verified: 'yes' });
-                  } else if (this_app.recycling_radio.checked) {
-                    image_store[i].meta = JSON.stringify({ guess: 'RECYCLING', verified: 'yes' });
+              // Sort the updated image data
+              this_app.sortResults(image_store, 'img_id', true, function() {
+
+                // Preserve image ID of deleted image to use with updated image
+                img_id = (JSON.parse(image_store[i].meta)).img_id;
+                
+                // Delete the old image 
+                this_app.sendEvent('deleteBig', {id: image_store[i].id}, function(e, r) {
+                  if (e) {
+                    console.log('Delete error: ' + e);
                   } else {
-                    image_store[i].meta = JSON.stringify({ guess: 'COMPOST', verified: 'yes' });
-                  }
+
+                    
+                    // Store the correct guess and mark the image as verified
+                    if (this_app.trash_radio.checked) {
+                      image_store[i].meta = JSON.stringify({ guess: 'TRASH', verified: 'yes', img_id: img_id });
+                    } else if (this_app.recycling_radio.checked) {
+                      image_store[i].meta = JSON.stringify({ guess: 'RECYCLING', verified: 'yes', img_id: img_id });
+                    } else {
+                      image_store[i].meta = JSON.stringify({ guess: 'COMPOST', verified: 'yes', img_id: img_id });
+                    }
   
-                  // POST data with updated meta information back to server
-                  http_post.open("POST","/?action=storeBig&uuid=" + this_uuid + '&meta=' + image_store[i].meta ,true);
-                  http_post.onload = function() {};
-                  http_post.send(uInt8Array);
-                }
+                    // POST data with updated meta information back to server
+                    http_post.open("POST","/?action=storeBig&uuid=" + this_uuid + '&meta=' + image_store[i].meta ,true);
+                    http_post.onload = function() {};
+                    http_post.send(uInt8Array);
+                
+                  }
+                });
               });
             }
           };
         })(window.idx, window.image_store);
         http_get.send();
 
-        // Increment the verified image count, used for skipping over verified entries
-        window.num_verified_entries++;
-        
         // Go to next image and refresh screen
         this_app.getRandomUnverifiedPic(window.idx+1);
 
@@ -194,35 +201,41 @@ MyApp.prototype.update = function(){
   var this_app = this;
   var this_uuid = this.myuuid;
   var disp_count;
+  var capture_store = new Array();
 
   // Set epoch to past 60 minutes to reduce data intake
   var d = new Date();
   var since = d.getTime() - (60*60*1000);
 
-  // Get the info for the latest image and then post it to the app
+  // Store the latest capture images and then post it to the app
   this_app.sendEvent('listBig', {since: since, uuid: this_uuid}, function(e, r) {
     if (e) {
       console.log('App error (Update): ' + e);
     } else {
-      var info = JSON.parse(r);
+      capture_store = JSON.parse(r);
+      
+      // Sort the results based on the latest image first
+      this_app.sortResults(capture_store, 'img_id', false, function() {
 
-      // Reset displayed image count
-      disp_count = 0;
+        // Reset displayed image count
+        disp_count = 0;
 
-      // Display up to the last 4 new (unverified) images and guesses in app
-      for(var i = 0; i < info.length; i++) {
-        if ((info[info.length-(i+1)]) && ((JSON.parse(info[info.length-(i+1)].meta)).verified === 'no')) {
-          
-          this_app.picture[disp_count].src = '/?action=retrieveBig&id=' + info[info.length-(i+1)].id; // Oldest first order, start from end
-          if (disp_count === 0) this_app.guess[disp_count].innerHTML= 'I think this is ' + (JSON.parse(info[info.length-(i+1)].meta)).guess + '.';
-          else this_app.guess[disp_count].innerHTML= (JSON.parse(info[info.length-(i+1)].meta)).guess;
-          
-          // Only increment for each one displayed
-          if(++disp_count === 4) {
-            break;
+// TODO rename info array, mark verified entries in capture mode
+        // Display up to the last 4 images and guesses in app
+        for(var i = 0 ; i < (capture_store.length - 1); i++) { // Ordered from oldest first, start from end
+          if (capture_store[i]) {
+            
+            this_app.picture[disp_count].src = '/?action=retrieveBig&id=' + capture_store[i].id;
+            if (disp_count === 0) this_app.guess[disp_count].innerHTML= 'I think this is ' + (JSON.parse(capture_store[i].meta)).guess + '.';
+            else this_app.guess[disp_count].innerHTML= (JSON.parse(capture_store[i].meta)).guess;
+            
+            // Only increment for each one displayed
+            if(++disp_count === 4) {
+              break;
+            }
           }
         }
-      }
+      });
     }
   });
 };
@@ -236,8 +249,8 @@ MyApp.prototype.getAllElements = function(){
   this.refresh_button = this.getElement("refresh_button");
 
   // Picture and guess modules
-  this.picture = new Array();
-  this.guess = new Array();
+  this.picture = new Array;
+  this.guess = new Array;
   // Generate 5 entries; 4 for capture mode, 1 for gaming mode
   for (var i = 0; i < 5; i++) {
     this.picture[i] = this.getElement("picture" + i);
@@ -294,25 +307,19 @@ MyApp.prototype.getRandomUnverifiedPic = function(idx) {
         // Store an image chunk and set the index
         window.image_store = JSON.parse(r);
         idx = 0;
-        
-        // Ressurect old verified list (in case app restarted)
-        if(window.num_verified_entries === 0) {
-          for (var i = 0; i < window.image_store.length; i++) {
-            if ((JSON.parse(window.image_store[i].meta)).verified === 'yes') {
-              window.num_verified_entries++;
-            }
-          }
-        }
+       
+        // Sort the data so that verified entries (oldest image IDs) are at the back
+        this_app.sortResults(window.image_store, 'img_id', true, function() {});
       }
     });   
   }
 
   // Images left, go through them
   // TODO: once run out of image chunk, get more (and not same ones over and over)
-  if (idx < (window.image_store.length - 4 - window.num_verified_entries)) {
+  if (idx < window.image_store.length) {
     
     // Run through all the images in the chunk (oldest first)
-    for(; idx < (window.image_store.length - 4 - window.num_verified_entries); idx++) { // Skip the latest 4 to prevent deleting images from capture screen
+    for(; idx < window.image_store.length; idx++) {
 
       // Image is valid and unverified, post it, set flag and exit
       if (window.image_store[idx] && (JSON.parse(window.image_store[idx].meta)).verified === 'no') {
@@ -322,6 +329,7 @@ MyApp.prototype.getRandomUnverifiedPic = function(idx) {
         // Show the prompt and choices
         this_app.choice_question.className = 'choices';
         this_app.choice_container.className = 'choices';
+        
         // Set flag
         done = true;
 
@@ -454,6 +462,18 @@ MyApp.prototype.appendStyle = function(styles) {
 
   document.getElementsByTagName("head")[0].appendChild(css);
 }
+
+// Sorts image list based on a meta field
+MyApp.prototype.sortResults = function (arr, prop, asc, callback) {
+
+    arr = arr.sort(function(a, b) {
+        if ((JSON.parse(a.meta))[prop] === (JSON.parse(b.meta))[prop]) return 0;
+        else if (((asc) && ((JSON.parse(a.meta))[prop] > (JSON.parse(b.meta))[prop])) || 
+                 ((!asc) && ((JSON.parse(b.meta))[prop] > (JSON.parse(a.meta))[prop]))) return 1;
+        else return -1;
+    });
+    return callback();
+};
 
 //spec says app needs to be named App
 var App = MyApp;
