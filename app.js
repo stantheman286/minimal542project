@@ -63,10 +63,9 @@ MyApp.prototype.start = function() {
     styles += '.spacer_big { height: 10px }\n';
     styles += '.prev_pic_container { text-align: center }\n';
     styles += '.prev_pic { vertical-align: middle; width: 50% }\n';
-    styles += '.guess { width: 33%; text-align: center; font-family: verdana; font-size: 10px; color: #FFFFFF }\n';
+    styles += '.guess { width: 33%; text-align: center; }\n';
     styles += '.buttons { background-color: #38577C; font-family: verdana; font-size: 10px; color: #FFFFFF; font-weight: bold }\n';
     styles += '.big_pic { vertical-align: middle; width:80% }\n';
-    styles += '.big_guess { font-family: verdana; font-size: 16px; color:#FFFFFF; font-weight: bold }\n';
     styles += '.small_guess { font-family: verdana; font-size: 12px; color:#FFFFFF; font-weight: bold }\n';
     styles += '.prev_container { width: 280px }\n';
 
@@ -81,6 +80,10 @@ MyApp.prototype.start = function() {
     styles += 'div.tabContent.hide { display: none; }\n';
     styles += 'div.choices { }\n';
     styles += 'div.choices.hide { display: none; }\n';
+    styles += 'div.big_guess_text { font-family: verdana; font-size: 16px; color:#FFFFFF; font-weight: bold }\n';
+    styles += 'div.big_guess_text.verified { font-family: verdana; font-size: 16px; color:#66FF66; font-weight: bold }\n';
+    styles += 'div.guess_text { font-family: verdana; font-size: 10px; color: #FFFFFF }\n';
+    styles += 'div.guess_text.verified { font-family: verdana; font-size: 10px; color: #66FF66 }\n';
 
     // Set style tag in HTML
     this_app.appendStyle(styles);
@@ -227,8 +230,21 @@ MyApp.prototype.update = function(){
             
             this_app.picture[disp_count].src = '/?action=retrieveBig&id=' + capture_store[i].id;
             if (disp_count === 0) this_app.guess[disp_count].innerHTML= 'I think this is ' + (JSON.parse(capture_store[i].meta)).guess + '.';
-            else this_app.guess[disp_count].innerHTML= (JSON.parse(capture_store[i].meta)).guess;
-            
+            else this_app.guess[disp_count].innerHTML = (JSON.parse(capture_store[i].meta)).guess;
+           
+            // Highlight verified guesses
+            if((disp_count === 0) && ((JSON.parse(capture_store[i].meta)).verified === 'yes')) {
+              this_app.guess[disp_count].className = 'big_guess_text verified';
+              this_app.guess[disp_count].innerHTML = 'This is ' + (JSON.parse(capture_store[i].meta)).guess + '.*';
+            } else if((JSON.parse(capture_store[i].meta)).verified === 'yes') {
+              this_app.guess[disp_count].className = 'guess_text verified';
+              this_app.guess[disp_count].innerHTML += '*';
+            } else if(disp_count === 0) {
+              this_app.guess[disp_count].className = 'big_guess_text';
+            } else {
+              this_app.guess[disp_count].className = 'guess_text';
+            }
+
             // Only increment for each one displayed
             if(++disp_count === 4) {
               break;
