@@ -2,6 +2,18 @@
 /*global AbstractApp */
 
 ////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////// Future Features //////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+//
+// 1) Randomize images chosen for gaming mode
+// 2) Pull new set of images when out (instead of pulling same images again
+//
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+
+////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////// Sub Class /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -300,8 +312,6 @@ MyApp.prototype.uniquify = function(preID, originalID) {
 MyApp.prototype.getRandomUnverifiedPic = function(idx) {
   "use strict";
 
-// TODO randomize?
-
   var this_app = this;
   var this_uuid = this.myuuid;
   
@@ -334,7 +344,6 @@ MyApp.prototype.getRandomUnverifiedPic = function(idx) {
   }
 
   // Images left, go through them
-  // TODO: once run out of image chunk, get more (and not same ones over and over)
   if (idx < window.image_store.length) {
     
     // Run through all the images in the chunk (oldest first)
@@ -360,16 +369,6 @@ MyApp.prototype.getRandomUnverifiedPic = function(idx) {
     }
   }
 
-// Don't try another retrieve, will just grab same data + more again
-//
-//    // No more images, display sorry image 
-//    if (done === false && info.length === 0) {
-//    
-//    // No match, load another chunk
-//    } else if (done === false) {
-//      since = since - (60*60*1000); // Back off another hour
-//    }
-
     if (done === false) {
       // Clear out image chunk and reset index to begin guessing again
       window.image_store = [];
@@ -383,8 +382,6 @@ MyApp.prototype.getRandomUnverifiedPic = function(idx) {
       this_app.choice_question.className = 'choices hide';
       this_app.choice_container.className = 'choices hide';
     }
-
-//  }
 };
 
 // Initializes the tabs at the top of the app
