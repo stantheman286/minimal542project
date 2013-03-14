@@ -125,7 +125,22 @@ AbstractApp.prototype.getElement = function(originalID) {
   //similar to getElementById but fixes the ids to comply with whatever
   //  originalID: the tag ID as written in the original html code.
   //
-  return document.getElementById("id" + this.myuuid + originalID);
+  return document.getElementById(this.getElementIDstr(originalID));
+};
+AbstractApp.prototype.getElementIDstr = function(originalID){
+  //
+  //returns the actual element ID from the originalID
+  //  originalID: the tag ID as written in the original html code.
+  //
+  // This may be useful when using other libraries like javascript
+  // e.g.
+  // if you have app.html with the following
+  // <div id="mydiv"> ...</div>
+  // then you might write the following in app.js
+  // var mydiv = jQuery("#"+this.getElementIDstr("mydiv"));
+  //
+  
+  return "id" + this.myuuid + originalID;
 };
 
 window.AbstractApp = AbstractApp;
