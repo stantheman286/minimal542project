@@ -6,8 +6,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 // Global variables
-window.timer;
-window.image_store = new Array();
+window.timer = null;
+window.image_store = [];
 window.idx = -1;
 
 function MyApp(divobj,uuid,dash){
@@ -48,7 +48,7 @@ MyApp.prototype.start = function() {
     // IDs (make anonymous)
     console.log(this_app.uniquify('#', 'container'));
 
-    var styles = this_app.uniquify('#', 'container') + ' { background-color: #C2D1E3; height: 380px }\n';
+    var styles = this_app.uniquify('#', 'container') + ' { background-color: #C2D1E3; height: 100% }\n';
     styles += this_app.uniquify('#', 'overall_align') + ' { position: relative; width: 280px; height: 380px }\n';
     styles += this_app.uniquify('#', 'tab_container') + ' { position: absolute; top: 0px; left: -103px; right: 0px }\n';
     styles += this_app.uniquify('#', 'picture_guess_container') + ' { position: absolute; bottom: 10px; top: 40px; text-align: center; background-color: #5B84B4 }\n';
@@ -56,6 +56,7 @@ MyApp.prototype.start = function() {
     styles += this_app.uniquify('#', 'prev_guess') + ' { font-family: verdana; font-size: 12px; color:#FFFFFF; font-weight: bold; height: 32px }\n';
     styles += this_app.uniquify('#', 'choice_question') + ' { font-family: verdana; font-size: 12px; color:#FFFFFF; font-weight: bold; }\n';
     styles += this_app.uniquify('#', 'choice_container') + ' { text-align: left; font-family: verdana; font-size: 14px; color: #FFFFFF; font-weight: bold }\n';
+    styles += this_app.uniquify('#', 'ver_author') + ' { font-family: verdana; font-size: 14px; color: #FFFFFF }\n';
     
     // Classes (not anonymous)
     styles += '.spacer_small { height: 5px }\n';
@@ -201,7 +202,7 @@ MyApp.prototype.update = function(){
   var this_app = this;
   var this_uuid = this.myuuid;
   var disp_count;
-  var capture_store = new Array();
+  var capture_store = [];
 
   // Set epoch to past 60 minutes to reduce data intake
   var d = new Date();
@@ -220,7 +221,6 @@ MyApp.prototype.update = function(){
         // Reset displayed image count
         disp_count = 0;
 
-// TODO rename info array, mark verified entries in capture mode
         // Display up to the last 4 images and guesses in app
         for(var i = 0 ; i < (capture_store.length - 1); i++) { // Ordered from oldest first, start from end
           if (capture_store[i]) {
@@ -241,6 +241,8 @@ MyApp.prototype.update = function(){
 };
 
 ////////////////////////////////// Some "Private" Methods //////////////////////
+
+// Gets all the HTML elements from the app webpage
 MyApp.prototype.getAllElements = function(){
   "use strict";
   
@@ -249,8 +251,8 @@ MyApp.prototype.getAllElements = function(){
   this.refresh_button = this.getElement("refresh_button");
 
   // Picture and guess modules
-  this.picture = new Array;
-  this.guess = new Array;
+  this.picture = [];
+  this.guess = [];
   // Generate 5 entries; 4 for capture mode, 1 for gaming mode
   for (var i = 0; i < 5; i++) {
     this.picture[i] = this.getElement("picture" + i);
@@ -278,8 +280,11 @@ MyApp.prototype.uniquify = function(preID, originalID) {
   return preID + 'id' + this.myuuid + originalID;
 };
 
+// Chooses an unverified picture to display for the game
 MyApp.prototype.getRandomUnverifiedPic = function(idx) {
   "use strict";
+
+// TODO randomize?
 
   var this_app = this;
   var this_uuid = this.myuuid;
@@ -289,13 +294,11 @@ MyApp.prototype.getRandomUnverifiedPic = function(idx) {
   var since = d.getTime() - (60*60*1000);
 
   // Set flag to show haven't found a picture yet
-  var done = new Boolean();
-  done = false;
+  var done = false;
   
   // Go through a chunk of images at a time until find a match or run out
 //  while (!done) {
 
-  // TODO: randomize?
   // No image chunk stored or out of images, get a new chunk
   if (window.image_store.length === 0) {
     
@@ -353,7 +356,7 @@ MyApp.prototype.getRandomUnverifiedPic = function(idx) {
 
     if (done === false) {
       // Clear out image chunk and reset index to begin guessing again
-      window.image_store = new String();
+      window.image_store = [];
       window.idx = -1;
 
       // Load static sorry image, clear out guess
@@ -366,23 +369,27 @@ MyApp.prototype.getRandomUnverifiedPic = function(idx) {
     }
 
 //  }
-}
+};
 
+// Initializes the tabs at the top of the app
 MyApp.prototype.initTabs = function() {
   "use strict";
 
   var this_app = this;
   var this_uuid = this.myuuid;
+  var i;
+  var selectedId;
 
   // Grab the tab links and content divs from the page
   var tabListItems = this_app.getElement("tabs").childNodes;
-  var tabLinks = new Array();
-  var contentDivs = new Array();
+  var tabLink;
+  var tabLinks = [];
+  var contentDivs = [];
 
-  for ( var i = 0; i < tabListItems.length; i++ ) {
+  for ( i = 0; i < tabListItems.length; i++ ) {
     if ( tabListItems[i].nodeName == "LI" ) {
-      var tabLink = this_app.getFirstChildWithTagName( tabListItems[i], 'A' );
-      var id = this_app.getHash( tabLink.getAttribute('href') );
+      tabLink = this_app.getFirstChildWithTagName( tabListItems[i], 'A' );
+      id = this_app.getHash( tabLink.getAttribute('href') );
       tabLinks[id] = tabLink;
       contentDivs[id] = document.getElementById(id);  // Don't use helper function
     }
@@ -390,14 +397,14 @@ MyApp.prototype.initTabs = function() {
 
   // Assign onclick events to the tab links, and
   // highlight the first tab
-  var i = 0;
+  i = 0;
 
   for ( var id in tabLinks ) {
 
     // Show the correct tab when clicked
     tabLinks[id].onclick = function() { 
    
-      var selectedId = this_app.getHash( this.getAttribute('href') );
+      selectedId = this_app.getHash( this.getAttribute('href') );
 
       // Refresh gaming screen anytime the tab is clicked
       if (selectedId === this_app.uniquify('', 'gaming')) {
@@ -421,37 +428,40 @@ MyApp.prototype.initTabs = function() {
 
     };
 
-    tabLinks[id].onfocus = function() { this.blur() };
-    if ( i == 0 ) {
+    tabLinks[id].onfocus = function() { this.blur(); };
+    if ( i === 0 ) {
       tabLinks[id].className = 'selected';
     }
     i++;
   }
 
   // Hide all content divs except the first
-  var i = 0;
+  i = 0;
 
   for ( var id in contentDivs ) {
-    if ( i != 0 ) {
+    if ( i !== 0 ) {
       contentDivs[id].className = 'tabContent hide';
     }
     i++;
   }
-}
+};
 
+// Tab helper function to get child nodes of an element
 MyApp.prototype.getFirstChildWithTagName = function(element, tagName) {
   "use strict";
   for ( var i = 0; i < element.childNodes.length; i++ ) {
     if ( element.childNodes[i].nodeName == tagName ) return element.childNodes[i];
   }
-}
+};
 
+// Tab helper function to get a hash
 MyApp.prototype.getHash = function(url) {
   "use strict";
   var hashPos = url.lastIndexOf ( '#' );
   return url.substring( hashPos + 1 );
-}
+};
 
+// Adds CSS into app webpage from js
 MyApp.prototype.appendStyle = function(styles) {
   "use strict";
   var css = document.createElement('style');
@@ -461,18 +471,19 @@ MyApp.prototype.appendStyle = function(styles) {
   else css.appendChild(document.createTextNode(styles));
 
   document.getElementsByTagName("head")[0].appendChild(css);
-}
+};
 
 // Sorts image list based on a meta field
 MyApp.prototype.sortResults = function (arr, prop, asc, callback) {
-
-    arr = arr.sort(function(a, b) {
-        if ((JSON.parse(a.meta))[prop] === (JSON.parse(b.meta))[prop]) return 0;
-        else if (((asc) && ((JSON.parse(a.meta))[prop] > (JSON.parse(b.meta))[prop])) || 
-                 ((!asc) && ((JSON.parse(b.meta))[prop] > (JSON.parse(a.meta))[prop]))) return 1;
-        else return -1;
-    });
-    return callback();
+  "use strict"
+    
+  arr = arr.sort(function(a, b) {
+      if ((JSON.parse(a.meta))[prop] === (JSON.parse(b.meta))[prop]) return 0;
+      else if (((asc) && ((JSON.parse(a.meta))[prop] > (JSON.parse(b.meta))[prop])) || 
+               ((!asc) && ((JSON.parse(b.meta))[prop] > (JSON.parse(a.meta))[prop]))) return 1;
+      else return -1;
+  });
+  return callback();
 };
 
 //spec says app needs to be named App
