@@ -237,7 +237,7 @@ MyApp.prototype.update = function(){
         disp_count = 0;
 
         // Display up to the last 4 images and guesses in app
-        for(var i = 0 ; i < (capture_store.length - 1); i++) { // Ordered from oldest first, start from end
+        for(var i = 0 ; i < capture_store.length; i++) { // Ordered from oldest first, start from end
           if (capture_store[i]) {
             
             this_app.picture[disp_count].src = '/?action=retrieveBig&id=' + capture_store[i].id;

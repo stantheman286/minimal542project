@@ -54,7 +54,7 @@ var LIVE = 1;
 var timer = null;
 var fd;
 var guess = null;
-var testing = true;
+var testing = false;  // Debug mode
 var img_id = 0;
 
 //some parameters.  they should go in a config file later:
@@ -94,8 +94,8 @@ function Device(listen_port) {
   this.addEventHandler('getPicture',this.getPicture); 
   
   //manually attach to manager.
-  this.manager_IP = 'localhost';
-//  this.manager_IP = '192.168.1.20';
+//  this.manager_IP = 'localhost';
+  this.manager_IP = '192.168.1.6';
 //  this.manager_IP = 'bioturk.ee.washington.edu';
   this.manager_port = 9090;
   this.my_IP = OS.networkInterfaces().wlan0[0].address;
