@@ -501,5 +501,22 @@ MyApp.prototype.sortResults = function (arr, prop, asc, callback) {
   return callback();
 };
 
+// stop() function, for future use
+//
+// MyApp.prototype.stop = function () {
+//   "use strict"
+// 
+//   var this_app = this;
+//   var this_uuid = this.myuuid;
+// 
+//   // Clear LCD and LED displays
+//   this_app.sendEvent('forward', {cmd:'shutdown', uuid:this_uuid}, function(e, r) {
+//     if (e) {
+//       console.log('App error (Stop): ' + e);
+//     }
+//   });
+//   
+// };
+
 //spec says app needs to be named App
 var App = MyApp;

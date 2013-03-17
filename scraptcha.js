@@ -91,12 +91,13 @@ function Device(listen_port) {
   //implementation specific events
   this.addEventHandler('auto_capture',this.auto_capture); 
   this.addEventHandler('startup',this.startup); 
+  this.addEventHandler('shutdown',this.shutdown); 
   this.addEventHandler('getPicture',this.getPicture); 
   
   //manually attach to manager.
 //  this.manager_IP = 'localhost';
-  this.manager_IP = '192.168.1.6';
-//  this.manager_IP = 'bioturk.ee.washington.edu';
+//  this.manager_IP = '192.168.1.6';
+  this.manager_IP = 'bioturk.ee.washington.edu';
   this.manager_port = 9090;
   this.my_IP = OS.networkInterfaces().wlan0[0].address;
   this.sendAction('addDevice',
@@ -210,6 +211,8 @@ Device.prototype.getHTMLEvent = function(event_data, response) {
 };
 
 ////////////////////IMPLEMENTATION SPECIFIC COMMANDS////////////////////////////
+
+// Starts the LED refresh
 Device.prototype.startup = function(fields,response) {
   "use strict";
 
@@ -284,6 +287,23 @@ Device.prototype.startup = function(fields,response) {
 
 };
 
+// Stops the LCD and LED displays
+Device.prototype.shutdown = function(fields,response) {
+  "use strict";
+  
+  // Initialize LCD and LEDs on startup
+  if(!testing) {
+
+    // Clear LCD display
+    scraptcha.lcdClear(fd);
+    
+    // Disable LED bar
+    scraptcha.ledBarDisable();
+  }
+
+};
+
+// Takes a picture and guess to send the manager
 Device.prototype.getPicture = function(fields,response) {
   "use strict";
 
