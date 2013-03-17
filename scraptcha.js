@@ -108,6 +108,24 @@ function Device(listen_port) {
   this.advert_timer = setInterval(function(){
     this_device.advertise('224.250.67.238',17768);
   },10000);*/
+
+  // Initialize LCD and LEDs on startup
+  if(!testing) {
+
+    // Start LCD and store descriptor
+    fd = scraptcha.lcdStart();
+    console.log('FD: ' + fd);
+
+    // Clear LCD display
+    scraptcha.lcdClear(fd);
+    scraptcha.lcdPrint(fd, 'Status: READY');
+    
+    // Prepare IO on the Pi
+    scraptcha.setup_io();
+
+    // Enable LED bar and reset values
+    scraptcha.ledBarEnable();
+  }
 }
 Device.prototype = Object.create(HEL.prototype);
 Device.prototype.constructor = Device;
@@ -200,20 +218,6 @@ Device.prototype.startup = function(fields,response) {
   var req;
 
   if (!testing) {
-
-    // Start LCD and store descriptor
-    fd = scraptcha.lcdStart();
-    console.log('FD: ' + fd);
-
-    // Clear LCD display
-    scraptcha.lcdClear(fd);
-    scraptcha.lcdPrint(fd, 'Status: READY');
-    
-    // Prepare IO on the Pi
-    scraptcha.setup_io();
-
-    // Enable LED bar and reset values
-    scraptcha.ledBarEnable();
 
     // Set up LED display loop for anodes
     setInterval(function() {

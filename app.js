@@ -419,8 +419,10 @@ MyApp.prototype.initTabs = function() {
    
       selectedId = this_app.getHash( this.getAttribute('href') );
 
-      // Refresh gaming screen anytime the tab is clicked
+      // Get latest images and refresh gaming screen anytime the tab is clicked
       if (selectedId === this_app.uniquify('', 'gaming')) {
+        window.image_store = [];
+        window.idx = -1;
         this_app.getRandomUnverifiedPic(window.idx);
       }
 
