@@ -99,7 +99,8 @@ function Device(listen_port) {
 //  this.manager_IP = '192.168.1.6';
   this.manager_IP = 'bioturk.ee.washington.edu';
   this.manager_port = 9090;
-  this.my_IP = OS.networkInterfaces().wlan0[0].address;
+//  this.my_IP = OS.networkInterfaces().wlan0[0].address;
+  this.my_IP = OS.networkInterfaces().eth0[0].address;
   this.sendAction('addDevice',
                   {port: listen_port, addr: this.my_IP},
                   function(){});
